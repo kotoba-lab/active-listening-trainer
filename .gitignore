@@ -1,0 +1,22 @@
+# Gradle
+.gradle/
+build/
+**/.gradle/
+**/build/
+local.properties
+
+# Android Studio
+.idea/
+*.iml
+*.iws
+.DS_Store
+
+# Key / secrets
+*.jks
+*.keystore
+
+# Generated
+app/release/
+
+# Keystore credentials (never commit!)
+keystore.properties
