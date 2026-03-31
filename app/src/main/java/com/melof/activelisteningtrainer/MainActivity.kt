@@ -13,6 +13,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.melof.activelisteningtrainer.ui.ChoiceModeScreen
 import com.melof.activelisteningtrainer.ui.FeedbackScreen
+import com.melof.activelisteningtrainer.ui.GuidedResponseScreen
+import com.melof.activelisteningtrainer.ui.PlayMode
 import com.melof.activelisteningtrainer.ui.ScenarioListScreen
 import com.melof.activelisteningtrainer.ui.SpeakScreen
 import com.melof.activelisteningtrainer.ui.theme.ActiveListeningTrainerTheme
@@ -29,16 +31,21 @@ class MainActivity : ComponentActivity() {
                     val vm: TrainerViewModel = viewModel()
 
                     NavHost(navController = navController, startDestination = "scenarios") {
+
                         composable("scenarios") {
                             ScenarioListScreen(
                                 vm = vm,
-                                onScenarioSelected = { scenario, isChoiceMode ->
+                                onScenarioSelected = { scenario, mode ->
                                     vm.selectScenario(scenario)
-                                    if (isChoiceMode) navController.navigate("choice")
-                                    else navController.navigate("speak")
+                                    when (mode) {
+                                        PlayMode.CHOICE  -> navController.navigate("choice")
+                                        PlayMode.GUIDED  -> navController.navigate("guided")
+                                        PlayMode.FREE    -> navController.navigate("speak")
+                                    }
                                 }
                             )
                         }
+
                         composable("choice") {
                             ChoiceModeScreen(
                                 vm = vm,
@@ -48,6 +55,16 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
+
+                        composable("guided") {
+                            GuidedResponseScreen(
+                                vm = vm,
+                                onBack = {
+                                    navController.popBackStack("scenarios", inclusive = false)
+                                }
+                            )
+                        }
+
                         composable("speak") {
                             SpeakScreen(
                                 vm = vm,
@@ -58,6 +75,7 @@ class MainActivity : ComponentActivity() {
                                 onBack = { navController.popBackStack() }
                             )
                         }
+
                         composable("feedback") {
                             FeedbackScreen(
                                 vm = vm,

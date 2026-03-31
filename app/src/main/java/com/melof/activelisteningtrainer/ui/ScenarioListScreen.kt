@@ -16,17 +16,27 @@ import com.melof.activelisteningtrainer.data.Difficulty
 import com.melof.activelisteningtrainer.data.Scenario
 import com.melof.activelisteningtrainer.viewmodel.TrainerViewModel
 
+/** 練習モード */
+enum class PlayMode { CHOICE, GUIDED, FREE }
+
 /**
- * @param onScenarioSelected シナリオと isChoiceMode (true=選択式 / false=自由回答) を返す
+ * @param onScenarioSelected シナリオと練習モードを返す
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScenarioListScreen(
     vm: TrainerViewModel,
-    onScenarioSelected: (Scenario, isChoiceMode: Boolean) -> Unit,
+    onScenarioSelected: (Scenario, PlayMode) -> Unit,
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("選択式", "自由回答")
+
+    data class TabInfo(val label: String, val mode: PlayMode, val description: String)
+    val tabs = listOf(
+        TabInfo("選択式",   PlayMode.CHOICE,  "4択から最適な返しを選ぶ"),
+        TabInfo("ガイド付き", PlayMode.GUIDED, "スキルのヒントを見ながら自由に返す"),
+        TabInfo("自由回答",  PlayMode.FREE,   "ヒントなし。自分の言葉だけで返す"),
+    )
+    val currentMode = tabs[selectedTab].mode
 
     Scaffold(
         topBar = {
@@ -45,10 +55,11 @@ fun ScenarioListScreen(
                 .fillMaxSize()
         ) {
             // ── モード切り替えタブ ─────────────────────────────────────────────
-            TabRow(
+            ScrollableTabRow(
                 selectedTabIndex = selectedTab,
                 containerColor = Color(0xFF3D6B4C),
                 contentColor = Color.White,
+                edgePadding = 0.dp,
                 indicator = { tabPositions ->
                     TabRowDefaults.SecondaryIndicator(
                         modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
@@ -56,14 +67,14 @@ fun ScenarioListScreen(
                     )
                 }
             ) {
-                tabs.forEachIndexed { index, title ->
+                tabs.forEachIndexed { index, tab ->
                     Tab(
                         selected = selectedTab == index,
                         onClick = { selectedTab = index },
                         text = {
                             Text(
-                                text = title,
-                                fontSize = 14.sp,
+                                text = tab.label,
+                                fontSize = 13.sp,
                                 fontWeight = if (selectedTab == index) FontWeight.Bold
                                              else FontWeight.Normal
                             )
@@ -73,21 +84,14 @@ fun ScenarioListScreen(
             }
 
             // ── モード説明テキスト ──────────────────────────────────────────────
-            val modeDescription = if (selectedTab == 0)
-                "4択から最適な返しを選ぶ"
-            else
-                "自分の言葉で声に出して返す"
-
             Text(
-                text = modeDescription,
+                text = tabs[selectedTab].description,
                 fontSize = 12.sp,
                 color = Color(0xFF666666),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
             // ── シナリオリスト ─────────────────────────────────────────────────
-            val isChoiceMode = selectedTab == 0
-
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -105,12 +109,11 @@ fun ScenarioListScreen(
                     items(vm.scenarios.filter { it.difficulty == difficulty }) { scenario ->
                         ScenarioCard(
                             scenario = scenario,
-                            isChoiceMode = isChoiceMode,
-                            onClick = { onScenarioSelected(scenario, isChoiceMode) }
+                            mode = currentMode,
+                            onClick = { onScenarioSelected(scenario, currentMode) }
                         )
                     }
                 }
-
                 item { Spacer(modifier = Modifier.height(16.dp)) }
             }
         }
@@ -120,13 +123,28 @@ fun ScenarioListScreen(
 @Composable
 fun ScenarioCard(
     scenario: Scenario,
-    isChoiceMode: Boolean,
+    mode: PlayMode,
     onClick: () -> Unit,
 ) {
     val bgColor = when (scenario.difficulty) {
         Difficulty.BEGINNER     -> Color(0xFFE8F5E9)
         Difficulty.INTERMEDIATE -> Color(0xFFFFF8E1)
         Difficulty.TRAP         -> Color(0xFFFFEBEE)
+    }
+    val badgeText = when (mode) {
+        PlayMode.CHOICE  -> "4択"
+        PlayMode.GUIDED  -> "ガイド"
+        PlayMode.FREE    -> "自由"
+    }
+    val badgeBg = when (mode) {
+        PlayMode.CHOICE  -> Color(0xFFE3F2FD)
+        PlayMode.GUIDED  -> Color(0xFFF1F8E9)
+        PlayMode.FREE    -> Color(0xFFF3E5F5)
+    }
+    val badgeFg = when (mode) {
+        PlayMode.CHOICE  -> Color(0xFF1565C0)
+        PlayMode.GUIDED  -> Color(0xFF2E7D32)
+        PlayMode.FREE    -> Color(0xFF6A1B9A)
     }
 
     Card(
@@ -164,19 +182,13 @@ fun ScenarioCard(
                     color = Color(0xFF888888)
                 )
             }
-            // モードバッジ
             SuggestionChip(
                 onClick = {},
                 enabled = false,
-                label = {
-                    Text(
-                        text = if (isChoiceMode) "4択" else "自由",
-                        fontSize = 11.sp
-                    )
-                },
+                label = { Text(text = badgeText, fontSize = 11.sp) },
                 colors = SuggestionChipDefaults.suggestionChipColors(
-                    disabledContainerColor = if (isChoiceMode) Color(0xFFE3F2FD) else Color(0xFFF3E5F5),
-                    disabledLabelColor = if (isChoiceMode) Color(0xFF1565C0) else Color(0xFF6A1B9A)
+                    disabledContainerColor = badgeBg,
+                    disabledLabelColor = badgeFg
                 )
             )
         }
