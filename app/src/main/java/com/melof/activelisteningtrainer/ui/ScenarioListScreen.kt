@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import com.melof.activelisteningtrainer.data.Difficulty
 import com.melof.activelisteningtrainer.data.Scenario
 import com.melof.activelisteningtrainer.viewmodel.TrainerViewModel
@@ -27,6 +29,7 @@ enum class PlayMode { CHOICE, GUIDED, FREE }
 fun ScenarioListScreen(
     vm: TrainerViewModel,
     onScenarioSelected: (Scenario, PlayMode) -> Unit,
+    onDependencyMode: () -> Unit = {},
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
@@ -54,6 +57,37 @@ fun ScenarioListScreen(
                 .padding(padding)
                 .fillMaxSize()
         ) {
+            // ── 依存・不安型バナー ─────────────────────────────────────────────
+            Card(
+                onClick = onDependencyMode,
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF5C4A7C)),
+                shape = RoundedCornerShape(0.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 10.dp)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            text = "依存・不安型ケース",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = Color.White
+                        )
+                        Text(
+                            text = "巻き込まれ度メーター付き  10問",
+                            fontSize = 11.sp,
+                            color = Color(0xFFCCB8E8)
+                        )
+                    }
+                    Text(text = "→", fontSize = 18.sp, color = Color.White)
+                }
+            }
+
             // ── モード切り替えタブ ─────────────────────────────────────────────
             ScrollableTabRow(
                 selectedTabIndex = selectedTab,
@@ -130,6 +164,7 @@ fun ScenarioCard(
         Difficulty.BEGINNER     -> Color(0xFFE8F5E9)
         Difficulty.INTERMEDIATE -> Color(0xFFFFF8E1)
         Difficulty.TRAP         -> Color(0xFFFFEBEE)
+        Difficulty.EXPERT       -> Color(0xFFF3E5F5)
     }
     val badgeText = when (mode) {
         PlayMode.CHOICE  -> "4択"

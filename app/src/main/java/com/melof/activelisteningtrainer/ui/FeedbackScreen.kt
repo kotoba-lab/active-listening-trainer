@@ -70,6 +70,32 @@ fun FeedbackScreen(
                     }
                 }
 
+                // 強フィードバックコピー（特定ペナルティが強ければ強調表示）
+                val strongCopy = buildStrongFeedbackCopy(score)
+                if (strongCopy != null) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF212121)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .padding(horizontal = 18.dp, vertical = 14.dp)
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Text(text = "⚠", fontSize = 20.sp)
+                            Text(
+                                text = strongCopy,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = Color(0xFFFFD740),
+                                lineHeight = 22.sp
+                            )
+                        }
+                    }
+                }
+
                 // スキルスロット評価
                 Text("スキル評価", fontWeight = FontWeight.Bold, fontSize = 16.sp)
 
@@ -453,6 +479,48 @@ private fun defaultSlotAdvice(skill: ActiveSkill): String = when (skill) {
         "「つまり〜ということだったんだね」など、相手の話を整理して返しましょう"
     ActiveSkill.SAFE_PACING ->
         "「ゆっくりでいいよ」など、相手のペースを尊重する言葉を意識しましょう"
+}
+
+/**
+ * 特定ペナルティが複数トリガーされた場合に強フィードバックコピーを返す。
+ * 設計書の「正しさで関係が閉じました」「アドバイスで扉が閉まりました」等に対応。
+ */
+private fun buildStrongFeedbackCopy(score: ScoreResult): String? {
+    val triggered = score.penaltyResults.filter { it.triggered }.map { it.penalty }
+    if (triggered.isEmpty()) return null
+
+    return when {
+        com.melof.activelisteningtrainer.data.PenaltyType.JUDGMENT in triggered &&
+        com.melof.activelisteningtrainer.data.PenaltyType.ADVICE in triggered ->
+            "正しさで関係が閉じました"
+
+        com.melof.activelisteningtrainer.data.PenaltyType.JUDGMENT in triggered ->
+            "正しさで関係が閉じました"
+
+        com.melof.activelisteningtrainer.data.PenaltyType.ADVICE in triggered &&
+        com.melof.activelisteningtrainer.data.PenaltyType.PREMATURE_REFRAME in triggered ->
+            "アドバイスで扉が閉まりました"
+
+        com.melof.activelisteningtrainer.data.PenaltyType.ADVICE in triggered ->
+            "解決しようとして、聞くことをやめてしまいました"
+
+        com.melof.activelisteningtrainer.data.PenaltyType.SELF_TALK in triggered ->
+            "自分の話にしたとき、相手は独りになりました"
+
+        com.melof.activelisteningtrainer.data.PenaltyType.INTERROGATION in triggered ->
+            "質問で追い詰めてしまいました"
+
+        com.melof.activelisteningtrainer.data.PenaltyType.JOIN_ATTACK in triggered ->
+            "一緒に怒ることで、感情の出口を塞ぎました"
+
+        com.melof.activelisteningtrainer.data.PenaltyType.MINIMIZATION in triggered ->
+            "「大したことない」が、相手の気持ちを消しました"
+
+        triggered.size >= 2 ->
+            "複数の落とし穴に同時に入りました"
+
+        else -> null
+    }
 }
 
 private fun defaultPenaltyAdvice(penalty: com.melof.activelisteningtrainer.data.PenaltyType): String =

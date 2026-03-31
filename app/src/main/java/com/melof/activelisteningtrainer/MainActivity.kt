@@ -12,6 +12,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.melof.activelisteningtrainer.ui.ChoiceModeScreen
+import com.melof.activelisteningtrainer.ui.DependencyListScreen
+import com.melof.activelisteningtrainer.ui.DependencyModeScreen
 import com.melof.activelisteningtrainer.ui.FeedbackScreen
 import com.melof.activelisteningtrainer.ui.GuidedResponseScreen
 import com.melof.activelisteningtrainer.ui.PlayMode
@@ -42,6 +44,27 @@ class MainActivity : ComponentActivity() {
                                         PlayMode.GUIDED  -> navController.navigate("guided")
                                         PlayMode.FREE    -> navController.navigate("speak")
                                     }
+                                },
+                                onDependencyMode = { navController.navigate("dep_list") }
+                            )
+                        }
+
+                        composable("dep_list") {
+                            DependencyListScreen(
+                                vm = vm,
+                                onScenarioSelected = { scenario ->
+                                    vm.selectDepScenario(scenario)
+                                    navController.navigate("dep_play")
+                                },
+                                onBack = { navController.popBackStack() }
+                            )
+                        }
+
+                        composable("dep_play") {
+                            DependencyModeScreen(
+                                vm = vm,
+                                onBack = {
+                                    navController.popBackStack("dep_list", inclusive = false)
                                 }
                             )
                         }
