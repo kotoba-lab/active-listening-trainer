@@ -11,6 +11,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.melof.activelisteningtrainer.ui.ChoiceModeScreen
 import com.melof.activelisteningtrainer.ui.FeedbackScreen
 import com.melof.activelisteningtrainer.ui.ScenarioListScreen
 import com.melof.activelisteningtrainer.ui.SpeakScreen
@@ -31,9 +32,19 @@ class MainActivity : ComponentActivity() {
                         composable("scenarios") {
                             ScenarioListScreen(
                                 vm = vm,
-                                onScenarioSelected = { scenario ->
+                                onScenarioSelected = { scenario, isChoiceMode ->
                                     vm.selectScenario(scenario)
-                                    navController.navigate("speak")
+                                    if (isChoiceMode) navController.navigate("choice")
+                                    else navController.navigate("speak")
+                                }
+                            )
+                        }
+                        composable("choice") {
+                            ChoiceModeScreen(
+                                vm = vm,
+                                onRetry = { navController.popBackStack() },
+                                onBack = {
+                                    navController.popBackStack("scenarios", inclusive = false)
                                 }
                             )
                         }
