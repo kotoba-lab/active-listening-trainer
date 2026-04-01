@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,6 +47,8 @@ fun GuidedResponseScreen(
     val hasResult = scoreResult != null
 
     var localText by rememberSaveable { mutableStateOf("") }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     // 「もう一度」でリセット
     fun retry() {
@@ -60,11 +63,18 @@ fun GuidedResponseScreen(
             val recognized = result.data
                 ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
                 ?.firstOrNull() ?: ""
-            if (recognized.isNotEmpty()) localText = recognized
+            if (recognized.isNotEmpty()) {
+                localText = recognized
+            } else {
+                scope.launch {
+                    snackbarHostState.showSnackbar("音声を認識できませんでした。もう一度お試しください")
+                }
+            }
         }
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("ガイド付き練習") },

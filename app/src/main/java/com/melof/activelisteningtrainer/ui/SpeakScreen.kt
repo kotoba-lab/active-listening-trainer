@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,19 +33,28 @@ fun SpeakScreen(
 ) {
     val scenario by vm.currentScenario.collectAsStateWithLifecycle()
     var localText by rememberSaveable { mutableStateOf("") }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     val speechLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val results = result.data
+            val recognized = result.data
                 ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
-            val recognized = results?.firstOrNull() ?: ""
-            if (recognized.isNotEmpty()) localText = recognized
+                ?.firstOrNull() ?: ""
+            if (recognized.isNotEmpty()) {
+                localText = recognized
+            } else {
+                scope.launch {
+                    snackbarHostState.showSnackbar("音声を認識できませんでした。もう一度お試しください")
+                }
+            }
         }
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("返答練習") },
