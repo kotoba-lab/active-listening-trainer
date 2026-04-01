@@ -1,5 +1,6 @@
 package com.melof.activelisteningtrainer.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -91,23 +92,41 @@ internal fun ScoreBadge(
 // ── 共通カード：ペナルティ行 ──────────────────────────────────────────────────
 
 @Composable
-internal fun SharedPenaltyRow(penalty: PenaltyResult) {
+internal fun SharedPenaltyRow(
+    penalty: PenaltyResult,
+    onWhyClick: (PenaltyType) -> Unit = {}
+) {
     Column(modifier = Modifier.padding(vertical = 4.dp)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Icon(
-                Icons.Default.Close,
-                contentDescription = null,
-                tint = Color(0xFFB00020),
-                modifier = Modifier.size(16.dp)
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = null,
+                    tint = Color(0xFFB00020),
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = "${penalty.penalty.label}（${penalty.penalty.score}pt）",
+                    fontSize = 13.sp,
+                    color = Color(0xFFB00020),
+                    fontWeight = FontWeight.Medium
+                )
+            }
             Text(
-                text = "${penalty.penalty.label}（${penalty.penalty.score}pt）",
-                fontSize = 13.sp,
-                color = Color(0xFFB00020),
-                fontWeight = FontWeight.Medium
+                text = "▶ なぜ？",
+                fontSize = 11.sp,
+                color = Color(0xFFB00020).copy(alpha = 0.7f),
+                modifier = Modifier
+                    .clickable { onWhyClick(penalty.penalty) }
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
             )
         }
         if (penalty.triggeredWords.isNotEmpty()) {
@@ -126,6 +145,26 @@ internal fun SharedPenaltyRow(penalty: PenaltyResult) {
 @Composable
 internal fun NgWordsCard(triggeredPenalties: List<PenaltyResult>) {
     if (triggeredPenalties.isEmpty()) return
+
+    var selectedPenalty by remember { mutableStateOf<PenaltyType?>(null) }
+
+    selectedPenalty?.let { pt ->
+        AlertDialog(
+            onDismissRequest = { selectedPenalty = null },
+            title = { Text("「${pt.label}」がNGな理由", fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    text = penaltyWhyReason(pt),
+                    fontSize = 14.sp,
+                    lineHeight = 22.sp
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { selectedPenalty = null }) { Text("閉じる") }
+            }
+        )
+    }
+
     Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))) {
         Column(modifier = Modifier.padding(14.dp)) {
             Text(
@@ -136,10 +175,32 @@ internal fun NgWordsCard(triggeredPenalties: List<PenaltyResult>) {
             )
             Spacer(modifier = Modifier.height(6.dp))
             triggeredPenalties.forEach { penalty ->
-                SharedPenaltyRow(penalty)
+                SharedPenaltyRow(
+                    penalty = penalty,
+                    onWhyClick = { selectedPenalty = it }
+                )
             }
         }
     }
+}
+
+internal fun penaltyWhyReason(penalty: PenaltyType): String = when (penalty) {
+    PenaltyType.ADVICE ->
+        "アドバイスは「あなたは間違っている」というメッセージになりやすく、相手が感情を出す前に扉を閉めてしまいます。まず気持ちを受け止めてから、求められたときに伝えましょう。"
+    PenaltyType.JUDGMENT ->
+        "「正しい・間違い」という評価は、相手を裁く立場に立つことです。感情を語っている相手に評価を返すと、話すことをやめてしまいます。"
+    PenaltyType.MINIMIZATION ->
+        "「大したことない」「みんなそうだよ」は相手の感情を否定します。たとえ事実でも、感じていることは本人にとってリアルです。"
+    PenaltyType.SELF_TALK ->
+        "「私も〜」と自分の話にすると、焦点が相手から自分に移ります。相手は聞いてもらいたいのに、聞く側になってしまいます。"
+    PenaltyType.EARLY_CLARIFICATION ->
+        "感情が整理されていない段階での「なぜ？」は尋問に聞こえます。まず受け止めてから、状況確認は後で。"
+    PenaltyType.INTERROGATION ->
+        "質問を重ねると詰問になります。相手は答えを出すことに追われ、感情を表現できなくなります。"
+    PenaltyType.PREMATURE_REFRAME ->
+        "まだ気持ちが整理されていない段階で「でもこういう見方もできるよ」と言うと、気持ちを否定されたように感じます。"
+    PenaltyType.JOIN_ATTACK ->
+        "一緒に怒ることで感情的な連帯は生まれますが、相手の感情の出口を共鳴で塞いでしまいます。怒りは増幅され、解決から遠ざかります。"
 }
 
 // ── 共通カード：文例を見る ────────────────────────────────────────────────────
