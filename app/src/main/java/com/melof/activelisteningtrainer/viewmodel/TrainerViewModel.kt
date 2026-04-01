@@ -3,6 +3,8 @@ package com.melof.activelisteningtrainer.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import com.melof.activelisteningtrainer.data.ActiveSkill
+import com.melof.activelisteningtrainer.data.AppDatabase
+import com.melof.activelisteningtrainer.data.AttemptRecord
 import com.melof.activelisteningtrainer.data.Difficulty
 import com.melof.activelisteningtrainer.data.DependencyRepository
 import com.melof.activelisteningtrainer.data.DependencyScenario
@@ -22,16 +24,57 @@ import com.melof.activelisteningtrainer.data.LlmScoreResult
 import com.melof.activelisteningtrainer.data.PracticeLogEntry
 import com.melof.activelisteningtrainer.data.PracticeLogStore
 import com.melof.activelisteningtrainer.data.UserDictionaryStore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.Calendar
 
 class TrainerViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val userDict   = UserDictionaryStore(app)
-    private val logStore   = PracticeLogStore(app)
+    private val userDict    = UserDictionaryStore(app)
+    private val logStore    = PracticeLogStore(app)
     private val apiKeyStore = ApiKeyStore(app)
+    private val dao         = AppDatabase.getInstance(app).attemptDao()
+
+    // ── 今日の開始タイムスタンプ ──────────────────────────────────────────────────
+    private fun todayStart(): Long = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
+
+    // ── 習得判定（3回連続クリア） ─────────────────────────────────────────────────
+    val masteredScenarioIds: StateFlow<Set<String>> = dao.allAttemptedIds()
+        .map { ids ->
+            ids.filter { id ->
+                val last3 = dao.lastThree(id)
+                last3.size >= 3 && last3.all { it.passed }
+            }.toSet()
+        }
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptySet())
+
+    // ── 今日のノルマ（1問以上回答） ───────────────────────────────────────────────
+    val todayDone: StateFlow<Boolean> = dao.todayAttempts(todayStart())
+        .map { it.isNotEmpty() }
+        .stateIn(viewModelScope, SharingStarted.Lazily, false)
+
+    // ── 最終プレーからの経過日数 ──────────────────────────────────────────────────
+    private val _daysSinceLastPlay = MutableStateFlow(0)
+    val daysSinceLastPlay: StateFlow<Int> = _daysSinceLastPlay.asStateFlow()
+
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            val last = dao.lastAttempt()
+            _daysSinceLastPlay.value = if (last == null) 0
+            else ((System.currentTimeMillis() - last.timestamp) / 86_400_000L).toInt()
+        }
+    }
 
     private val _currentScenario = MutableStateFlow<Scenario?>(null)
     val currentScenario: StateFlow<Scenario?> = _currentScenario.asStateFlow()
@@ -77,6 +120,7 @@ class TrainerViewModel(app: Application) : AndroidViewModel(app) {
         val result = DependencyScoring.evaluate(text, scenario)
         _involvementResult.value = result
 
+        val cleared = result.involvementLevel.name == "SAFE"
         logStore.saveEntry(
             PracticeLogEntry(
                 timestampMs    = System.currentTimeMillis(),
@@ -85,10 +129,15 @@ class TrainerViewModel(app: Application) : AndroidViewModel(app) {
                 totalScore     = result.rawScore,
                 targetAchieved = 0,
                 targetTotal    = 0,
-                cleared        = result.involvementLevel.name == "SAFE",
+                cleared        = cleared,
             )
         )
         _practiceLog.value = logStore.loadAll()
+
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.insert(AttemptRecord(scenarioId = "dep_${scenario.id}", passed = cleared))
+            _daysSinceLastPlay.value = 0
+        }
     }
 
     fun retryDep() {
@@ -145,6 +194,8 @@ class TrainerViewModel(app: Application) : AndroidViewModel(app) {
 
         val targetSlots = scenario.freeResponseScoring.targetSlots
         val achieved = result.slotResults.count { it.skill in targetSlots && it.achieved }
+        val cleared  = achieved == targetSlots.size && result.penaltyResults.none { it.triggered }
+
         logStore.saveEntry(
             PracticeLogEntry(
                 timestampMs    = System.currentTimeMillis(),
@@ -153,11 +204,15 @@ class TrainerViewModel(app: Application) : AndroidViewModel(app) {
                 totalScore     = result.totalScore,
                 targetAchieved = achieved,
                 targetTotal    = targetSlots.size,
-                cleared        = achieved == targetSlots.size &&
-                                 result.penaltyResults.none { it.triggered },
+                cleared        = cleared,
             )
         )
         _practiceLog.value = logStore.loadAll()
+
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.insert(AttemptRecord(scenarioId = scenario.id, passed = cleared))
+            _daysSinceLastPlay.value = 0
+        }
     }
 
     fun retry() {
