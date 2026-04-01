@@ -18,9 +18,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.melof.activelisteningtrainer.data.ActiveSkill
-import com.melof.activelisteningtrainer.data.PenaltyResult
+import com.melof.activelisteningtrainer.data.PenaltyType
 import com.melof.activelisteningtrainer.data.ScoreResult
 import com.melof.activelisteningtrainer.data.SlotResult
+import com.melof.activelisteningtrainer.data.UserDictionaryStore
 import com.melof.activelisteningtrainer.viewmodel.TrainerViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,6 +34,9 @@ fun FeedbackScreen(
     val result by vm.scoreResult.collectAsStateWithLifecycle()
     val scenario by vm.currentScenario.collectAsStateWithLifecycle()
     val userPhrases by vm.userPhrases.collectAsStateWithLifecycle()
+    val llmScore by vm.llmScore.collectAsStateWithLifecycle()
+    val llmLoading by vm.llmLoading.collectAsStateWithLifecycle()
+    val llmError by vm.llmError.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -57,18 +61,7 @@ fun FeedbackScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // あなたの返答
-                Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Text(
-                            text = "あなたの返答",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp,
-                            color = Color.Gray
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(text = score.input, fontSize = 15.sp, lineHeight = 24.sp)
-                    }
-                }
+                InputResponseCard(input = score.input)
 
                 // 強フィードバックコピー（特定ペナルティが強ければ強調表示）
                 val strongCopy = buildStrongFeedbackCopy(score)
@@ -139,130 +132,41 @@ fun FeedbackScreen(
 
                 // ペナルティ検出
                 val triggeredPenalties = score.penaltyResults.filter { it.triggered }
-                if (triggeredPenalties.isNotEmpty()) {
-                    Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))) {
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            Text(
-                                text = "気をつけたい要素",
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFFB00020),
-                                fontSize = 14.sp
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            triggeredPenalties.forEach { penalty ->
-                                PenaltyRow(penalty)
-                            }
-                        }
-                    }
-                }
+                NgWordsCard(triggeredPenalties)
+
+                // 結果の読み方ガイド
+                Text(
+                    text = "まずは「必須スキル」が入っているかを見て、次に「気をつけたい要素」を確認すると分かりやすいです",
+                    fontSize = 11.sp,
+                    color = Color(0xFF999999),
+                    lineHeight = 17.sp,
+                )
 
                 // スコアバッジ
                 val targetAchieved = score.slotResults.count { it.skill in targetSlots && it.achieved }
                 val targetTotal    = targetSlots.size
-                val hasPenalty     = triggeredPenalties.isNotEmpty()
-                val allClear       = targetAchieved == targetTotal && !hasPenalty
-                val halfOrMore     = targetTotal > 0 && targetAchieved >= (targetTotal + 1) / 2
-
-                val scoreColor = when {
-                    allClear   -> Color(0xFF2E7D32)
-                    halfOrMore -> Color(0xFFF57F17)
-                    else       -> Color(0xFFB00020)
-                }
-                val scoreLabel = when {
-                    allClear   -> "よくできました"
-                    halfOrMore -> "もう少し"
-                    else       -> "要練習"
-                }
-
-                Card(colors = CardDefaults.cardColors(containerColor = scoreColor.copy(alpha = 0.1f))) {
-                    Row(
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "必須 $targetAchieved / $targetTotal",
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = scoreColor
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = "合計 ${score.totalScore}pt",
-                            fontSize = 16.sp,
-                            color = scoreColor
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(text = scoreLabel, fontSize = 16.sp, color = scoreColor)
-                    }
-                }
+                ScoreBadge(
+                    targetAchieved = targetAchieved,
+                    targetTotal    = targetTotal,
+                    totalScore     = score.totalScore,
+                    hasPenalty     = triggeredPenalties.isNotEmpty()
+                )
 
                 // 文例カード
-                val sample = scenario?.sampleResponse ?: ""
-                if (sample.isNotEmpty()) {
-                    var sampleExpanded by rememberSaveable { mutableStateOf(false) }
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF3E5F5)),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "文例を見る",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp,
-                                    color = Color(0xFF6A1B9A)
-                                )
-                                TextButton(
-                                    onClick = { sampleExpanded = !sampleExpanded },
-                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
-                                ) {
-                                    Text(
-                                        text = if (sampleExpanded) "閉じる" else "表示",
-                                        fontSize = 13.sp,
-                                        color = Color(0xFF6A1B9A)
-                                    )
-                                }
-                            }
-                            if (sampleExpanded) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(text = sample, fontSize = 14.sp, lineHeight = 24.sp)
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Text(
-                                    text = "※ あくまで一例です。自分の言葉でアレンジしましょう。",
-                                    fontSize = 11.sp,
-                                    color = Color(0xFF9E9E9E)
-                                )
-                            }
-                        }
-                    }
-                }
+                SampleResponseCard(sampleResponse = scenario?.sampleResponse ?: "")
 
                 // 次の練習ポイント
-                val advice = buildAdvice(score)
-                if (advice.isNotEmpty()) {
-                    Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD))) {
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            Text(
-                                text = "次の練習ポイント",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                                color = Color(0xFF1565C0)
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            advice.forEach { point ->
-                                Text(text = "・$point", fontSize = 13.sp, lineHeight = 20.sp)
-                                Spacer(modifier = Modifier.height(4.dp))
-                            }
-                        }
-                    }
-                }
+                AdviceCard(advice = buildAdvice(score))
+
+                // AI採点
+                AiScoreButton(
+                    loading   = llmLoading,
+                    hasResult = llmScore != null,
+                    hasApiKey = vm.hasApiKey(),
+                    onClick   = { vm.requestLlmScore() }
+                )
+                llmScore?.let { LlmFeedbackCard(it) }
+                llmError?.let { LlmErrorCard(it) }
 
                 // ボタン
                 Row(
@@ -368,7 +272,7 @@ private fun SkillSlotRow(
                     }
                 }
                 else -> {
-                    val validationError = com.melof.activelisteningtrainer.data.UserDictionaryStore
+                    val validationError = UserDictionaryStore
                         .validationErrorMessage(phraseText)
                     Column(modifier = Modifier.padding(top = 4.dp)) {
                         OutlinedTextField(
@@ -397,13 +301,13 @@ private fun SkillSlotRow(
                             Button(
                                 onClick = {
                                     val t = phraseText.trim()
-                                    if (com.melof.activelisteningtrainer.data.UserDictionaryStore.isValidPhrase(t)) {
+                                    if (UserDictionaryStore.isValidPhrase(t)) {
                                         onRegister(t)
                                         showEditor = false
                                     }
                                 },
                                 enabled = phraseText.isNotBlank() &&
-                                    com.melof.activelisteningtrainer.data.UserDictionaryStore.isValidPhrase(phraseText.trim())
+                                    UserDictionaryStore.isValidPhrase(phraseText.trim())
                             ) {
                                 Text("保存", fontSize = 12.sp)
                             }
@@ -415,36 +319,6 @@ private fun SkillSlotRow(
     }
 }
 
-@Composable
-private fun PenaltyRow(penalty: PenaltyResult) {
-    Column(modifier = Modifier.padding(vertical = 4.dp)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Icon(
-                Icons.Default.Close,
-                contentDescription = null,
-                tint = Color(0xFFB00020),
-                modifier = Modifier.size(16.dp)
-            )
-            Text(
-                text = "${penalty.penalty.label}（${penalty.penalty.score}pt）",
-                fontSize = 13.sp,
-                color = Color(0xFFB00020),
-                fontWeight = FontWeight.Medium
-            )
-        }
-        if (penalty.triggeredWords.isNotEmpty()) {
-            Text(
-                text = "該当: ${penalty.triggeredWords.joinToString("、") { "「$it」" }}",
-                fontSize = 11.sp,
-                color = Color(0xFF888888),
-                modifier = Modifier.padding(start = 22.dp)
-            )
-        }
-    }
-}
 
 private fun suggestPhrase(skill: ActiveSkill): String = when (skill) {
     ActiveSkill.EMOTIONAL_REFLECTION -> "それはつらいね"
@@ -479,21 +353,6 @@ private fun buildAdvice(score: ScoreResult): List<String> {
     return advice
 }
 
-private fun defaultSlotAdvice(skill: ActiveSkill): String = when (skill) {
-    ActiveSkill.EMOTIONAL_REFLECTION ->
-        "「それはつらいね」など、相手の感情を言葉にして返してみましょう"
-    ActiveSkill.ACCEPTANCE ->
-        "「そうなんだね」「聞いてるよ」など、受け止めの言葉を入れてみましょう"
-    ActiveSkill.PROMPT ->
-        "「もう少し話してみて」など、相手が続けやすい言葉を足してみましょう"
-    ActiveSkill.LIGHT_FOCUS ->
-        "「特にどの部分が？」など、焦点を当てる問いかけを試してみましょう"
-    ActiveSkill.SUMMARY_LIKE ->
-        "「つまり〜ということだったんだね」など、相手の話を整理して返しましょう"
-    ActiveSkill.SAFE_PACING ->
-        "「ゆっくりでいいよ」など、相手のペースを尊重する言葉を意識しましょう"
-}
-
 /**
  * 特定ペナルティが複数トリガーされた場合に強フィードバックコピーを返す。
  * 設計書の「正しさで関係が閉じました」「アドバイスで扉が閉まりました」等に対応。
@@ -503,30 +362,30 @@ private fun buildStrongFeedbackCopy(score: ScoreResult): String? {
     if (triggered.isEmpty()) return null
 
     return when {
-        com.melof.activelisteningtrainer.data.PenaltyType.JUDGMENT in triggered &&
-        com.melof.activelisteningtrainer.data.PenaltyType.ADVICE in triggered ->
+        PenaltyType.JUDGMENT in triggered &&
+        PenaltyType.ADVICE in triggered ->
             "正しさで関係が閉じました"
 
-        com.melof.activelisteningtrainer.data.PenaltyType.JUDGMENT in triggered ->
+        PenaltyType.JUDGMENT in triggered ->
             "正しさで関係が閉じました"
 
-        com.melof.activelisteningtrainer.data.PenaltyType.ADVICE in triggered &&
-        com.melof.activelisteningtrainer.data.PenaltyType.PREMATURE_REFRAME in triggered ->
+        PenaltyType.ADVICE in triggered &&
+        PenaltyType.PREMATURE_REFRAME in triggered ->
             "アドバイスで扉が閉まりました"
 
-        com.melof.activelisteningtrainer.data.PenaltyType.ADVICE in triggered ->
+        PenaltyType.ADVICE in triggered ->
             "解決しようとして、聞くことをやめてしまいました"
 
-        com.melof.activelisteningtrainer.data.PenaltyType.SELF_TALK in triggered ->
+        PenaltyType.SELF_TALK in triggered ->
             "自分の話にしたとき、相手は独りになりました"
 
-        com.melof.activelisteningtrainer.data.PenaltyType.INTERROGATION in triggered ->
+        PenaltyType.INTERROGATION in triggered ->
             "質問で追い詰めてしまいました"
 
-        com.melof.activelisteningtrainer.data.PenaltyType.JOIN_ATTACK in triggered ->
+        PenaltyType.JOIN_ATTACK in triggered ->
             "一緒に怒ることで、感情の出口を塞ぎました"
 
-        com.melof.activelisteningtrainer.data.PenaltyType.MINIMIZATION in triggered ->
+        PenaltyType.MINIMIZATION in triggered ->
             "「大したことない」が、相手の気持ちを消しました"
 
         triggered.size >= 2 ->
@@ -536,22 +395,3 @@ private fun buildStrongFeedbackCopy(score: ScoreResult): String? {
     }
 }
 
-private fun defaultPenaltyAdvice(penalty: com.melof.activelisteningtrainer.data.PenaltyType): String =
-    when (penalty) {
-        com.melof.activelisteningtrainer.data.PenaltyType.ADVICE ->
-            "まず気持ちを受け止めてから。アドバイスは相手が求めたときに。"
-        com.melof.activelisteningtrainer.data.PenaltyType.JUDGMENT ->
-            "「正しい/間違い」などの評価は、相手の気持ちを閉じさせます。"
-        com.melof.activelisteningtrainer.data.PenaltyType.MINIMIZATION ->
-            "「大したことない」は相手の感情を否定します。まず受け止めましょう。"
-        com.melof.activelisteningtrainer.data.PenaltyType.SELF_TALK ->
-            "「私も〜」と自分の話にすると、焦点が相手から離れてしまいます。"
-        com.melof.activelisteningtrainer.data.PenaltyType.EARLY_CLARIFICATION ->
-            "感情を受け止める前の「なぜ？」は相手を尋問されているように感じさせます。"
-        com.melof.activelisteningtrainer.data.PenaltyType.INTERROGATION ->
-            "矢継ぎ早の質問は会話を詰問化します。1つ受け止めてから次へ。"
-        com.melof.activelisteningtrainer.data.PenaltyType.PREMATURE_REFRAME ->
-            "まだ気持ちが整理されていない段階でのポジティブ変換は逆効果です。"
-        com.melof.activelisteningtrainer.data.PenaltyType.JOIN_ATTACK ->
-            "相手と一緒に第三者を攻撃すると、感情的な連帯が強化されてしまいます。"
-    }

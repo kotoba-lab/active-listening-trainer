@@ -11,6 +11,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.melof.activelisteningtrainer.ui.UserDictionaryScreen
+import com.melof.activelisteningtrainer.ui.PracticeHistoryScreen
 import com.melof.activelisteningtrainer.ui.ChoiceModeScreen
 import com.melof.activelisteningtrainer.ui.DependencyListScreen
 import com.melof.activelisteningtrainer.ui.DependencyModeScreen
@@ -38,14 +40,30 @@ class MainActivity : ComponentActivity() {
                             ScenarioListScreen(
                                 vm = vm,
                                 onScenarioSelected = { scenario, mode ->
-                                    vm.selectScenario(scenario)
+                                    vm.selectScenario(scenario, mode.name)
                                     when (mode) {
                                         PlayMode.CHOICE  -> navController.navigate("choice")
                                         PlayMode.GUIDED  -> navController.navigate("guided")
                                         PlayMode.FREE    -> navController.navigate("speak")
                                     }
                                 },
-                                onDependencyMode = { navController.navigate("dep_list") }
+                                onDependencyMode = { navController.navigate("dep_list") },
+                                onDictionary = { navController.navigate("dictionary") },
+                                onHistory = { navController.navigate("history") }
+                            )
+                        }
+
+                        composable("dictionary") {
+                            UserDictionaryScreen(
+                                vm = vm,
+                                onBack = { navController.popBackStack() }
+                            )
+                        }
+
+                        composable("history") {
+                            PracticeHistoryScreen(
+                                vm = vm,
+                                onBack = { navController.popBackStack() }
                             )
                         }
 

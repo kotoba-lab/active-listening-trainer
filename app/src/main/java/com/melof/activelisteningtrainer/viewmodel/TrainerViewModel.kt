@@ -15,14 +15,23 @@ import com.melof.activelisteningtrainer.data.ScenarioRepository
 import com.melof.activelisteningtrainer.data.ScenarioType
 import com.melof.activelisteningtrainer.data.ScoreResult
 import com.melof.activelisteningtrainer.data.ScoringEngine
+import androidx.lifecycle.viewModelScope
+import com.melof.activelisteningtrainer.data.ApiKeyStore
+import com.melof.activelisteningtrainer.data.ClaudeApiClient
+import com.melof.activelisteningtrainer.data.LlmScoreResult
+import com.melof.activelisteningtrainer.data.PracticeLogEntry
+import com.melof.activelisteningtrainer.data.PracticeLogStore
 import com.melof.activelisteningtrainer.data.UserDictionaryStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 class TrainerViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val userDict = UserDictionaryStore(app)
+    private val userDict   = UserDictionaryStore(app)
+    private val logStore   = PracticeLogStore(app)
+    private val apiKeyStore = ApiKeyStore(app)
 
     private val _currentScenario = MutableStateFlow<Scenario?>(null)
     val currentScenario: StateFlow<Scenario?> = _currentScenario.asStateFlow()
@@ -32,6 +41,21 @@ class TrainerViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _userPhrases = MutableStateFlow(userDict.loadAll())
     val userPhrases: StateFlow<Map<ActiveSkill, List<String>>> = _userPhrases.asStateFlow()
+
+    private val _practiceLog = MutableStateFlow(logStore.loadAll())
+    val practiceLog: StateFlow<List<PracticeLogEntry>> = _practiceLog.asStateFlow()
+
+    private val _llmScore   = MutableStateFlow<LlmScoreResult?>(null)
+    val llmScore: StateFlow<LlmScoreResult?> = _llmScore.asStateFlow()
+
+    private val _llmLoading = MutableStateFlow(false)
+    val llmLoading: StateFlow<Boolean> = _llmLoading.asStateFlow()
+
+    private val _llmError   = MutableStateFlow<String?>(null)
+    val llmError: StateFlow<String?> = _llmError.asStateFlow()
+
+    /** selectScenario 時に確定したモード名（"CHOICE"|"GUIDED"|"FREE"） */
+    private var _currentPlayMode: String = "FREE"
 
     val scenarios = ScenarioRepository.scenarios
     val dependencyScenarios = DependencyRepository.scenarios
@@ -50,7 +74,21 @@ class TrainerViewModel(app: Application) : AndroidViewModel(app) {
 
     fun submitDepResponse(text: String) {
         val scenario = _currentDepScenario.value ?: return
-        _involvementResult.value = DependencyScoring.evaluate(text, scenario)
+        val result = DependencyScoring.evaluate(text, scenario)
+        _involvementResult.value = result
+
+        logStore.saveEntry(
+            PracticeLogEntry(
+                timestampMs    = System.currentTimeMillis(),
+                scenarioTitle  = scenario.title,
+                playMode       = "DEP",
+                totalScore     = result.rawScore,
+                targetAchieved = 0,
+                targetTotal    = 0,
+                cleared        = result.involvementLevel.name == "SAFE",
+            )
+        )
+        _practiceLog.value = logStore.loadAll()
     }
 
     fun retryDep() {
@@ -92,18 +130,76 @@ class TrainerViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun selectScenario(scenario: Scenario) {
+    fun selectScenario(scenario: Scenario, playMode: String = "FREE") {
         _currentScenario.value = scenario
+        _currentPlayMode = playMode
         _scoreResult.value = null
+        _llmScore.value = null
+        _llmError.value = null
     }
 
     fun submitResponse(text: String) {
         val scenario = _currentScenario.value ?: return
-        _scoreResult.value = ScoringEngine.evaluate(text, scenario, userDict.loadAll())
+        val result = ScoringEngine.evaluate(text, scenario, userDict.loadAll())
+        _scoreResult.value = result
+
+        val targetSlots = scenario.freeResponseScoring.targetSlots
+        val achieved = result.slotResults.count { it.skill in targetSlots && it.achieved }
+        logStore.saveEntry(
+            PracticeLogEntry(
+                timestampMs    = System.currentTimeMillis(),
+                scenarioTitle  = scenario.title,
+                playMode       = _currentPlayMode,
+                totalScore     = result.totalScore,
+                targetAchieved = achieved,
+                targetTotal    = targetSlots.size,
+                cleared        = achieved == targetSlots.size &&
+                                 result.penaltyResults.none { it.triggered },
+            )
+        )
+        _practiceLog.value = logStore.loadAll()
     }
 
     fun retry() {
         _scoreResult.value = null
+        _llmScore.value = null
+        _llmError.value = null
+    }
+
+    // ── API キー管理 ─────────────────────────────────────────────────────────────
+
+    fun saveApiKey(key: String) = apiKeyStore.save(key)
+    fun loadApiKey(): String = apiKeyStore.load()
+    fun hasApiKey(): Boolean = apiKeyStore.hasKey()
+
+    // ── LLM採点 ──────────────────────────────────────────────────────────────────
+
+    fun requestLlmScore() {
+        val apiKey = apiKeyStore.load()
+        if (apiKey.isBlank()) {
+            _llmError.value = "APIキーが設定されていません"
+            return
+        }
+        val input = _scoreResult.value?.input
+            ?: _involvementResult.value?.input
+            ?: return
+        val prompt = buildLlmPrompt(input) ?: return
+
+        _llmScore.value = null
+        _llmError.value = null
+        _llmLoading.value = true
+
+        viewModelScope.launch {
+            ClaudeApiClient.score(prompt, apiKey)
+                .onSuccess { result ->
+                    _llmScore.value = result
+                    _llmLoading.value = false
+                }
+                .onFailure { e ->
+                    _llmError.value = e.message ?: "エラーが発生しました"
+                    _llmLoading.value = false
+                }
+        }
     }
 
     fun registerPhrase(skill: ActiveSkill, phrase: String) {

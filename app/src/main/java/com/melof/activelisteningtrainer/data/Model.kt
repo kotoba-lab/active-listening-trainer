@@ -24,16 +24,18 @@ enum class PenaltyType(val label: String, val score: Int) {
 
 // ─── シナリオ分類 ────────────────────────────────────────────────────────────────
 enum class ScenarioCategory(val label: String) {
-    VENTING(          "愚痴を聞く"),
-    SADNESS(          "落ち込みを受け止める"),
-    ANXIETY(          "不安をほどく"),
-    SCATTERED(        "話が散らかった相手を整理する"),
-    ANGER(            "怒りの裏の感情を拾う"),
-    SHAME(            "恥や気まずさのある相談"),
-    SELF_CAUSED(      "自業自得っぽい相談"),
-    ADVICE_TRAP(      "助言したくなる相談"),
-    SELF_TALK_TRAP(   "自分語りしたくなる相談"),
-    EARLY_FOCUS_TRAP( "明確化したいが早すぎる場面"),
+    VENTING(             "愚痴を聞く"),
+    SADNESS(             "落ち込みを受け止める"),
+    ANXIETY(             "不安をほどく"),
+    SCATTERED(           "話が散らかった相手を整理する"),
+    ANGER(               "怒りの裏の感情を拾う"),
+    SHAME(               "恥や気まずさのある相談"),
+    SELF_CAUSED(         "自業自得っぽい相談"),
+    ADVICE_TRAP(         "助言したくなる相談"),
+    SELF_TALK_TRAP(      "自分語りしたくなる相談"),
+    EARLY_FOCUS_TRAP(    "明確化したいが早すぎる場面"),
+    LOW_VERBAL_OR_SILENCE("低発話・沈黙への応答"),
+    REPAIR_AND_BRIDGE(   "修復と助言への橋渡し"),
 }
 
 // ─── 難易度 ──────────────────────────────────────────────────────────────────────

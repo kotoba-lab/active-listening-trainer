@@ -1,15 +1,22 @@
 package com.melof.activelisteningtrainer.ui
 
+import android.content.Context
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,6 +37,8 @@ fun ScenarioListScreen(
     vm: TrainerViewModel,
     onScenarioSelected: (Scenario, PlayMode) -> Unit,
     onDependencyMode: () -> Unit = {},
+    onDictionary: () -> Unit = {},
+    onHistory: () -> Unit = {},
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
@@ -41,10 +50,53 @@ fun ScenarioListScreen(
     )
     val currentMode = tabs[selectedTab].mode
 
+    val context = LocalContext.current
+    val helpPrefs = remember { context.getSharedPreferences("help_prefs", Context.MODE_PRIVATE) }
+    var helpDismissed by remember { mutableStateOf(helpPrefs.getBoolean("help_card_dismissed", false)) }
+    var showModeHelp by remember { mutableStateOf(false) }
+
+    if (showModeHelp) {
+        val (modeDesc1, modeDesc2) = when (tabs[selectedTab].mode) {
+            PlayMode.CHOICE -> "4つの返しから、いちばん相手を受け止めやすいものを選ぶモードです" to "まずは感覚をつかみたい人向けです"
+            PlayMode.GUIDED -> "意識したいスキルを見ながら、自分の言葉で返すモードです" to "自由回答の前に練習したい人に向いています"
+            PlayMode.FREE   -> "ヒントなしで、自分の言葉だけで返すモードです" to "実戦に近い形で練習したい人向けです"
+        }
+        AlertDialog(
+            onDismissRequest = { showModeHelp = false },
+            title = { Text("${tabs[selectedTab].label}モードとは", fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text(text = modeDesc1, fontSize = 14.sp, lineHeight = 22.sp)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(text = modeDesc2, fontSize = 13.sp, color = Color(0xFF666666))
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showModeHelp = false }) { Text("閉じる") }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("アクティブリスニング練習") },
+                actions = {
+                    IconButton(onClick = onHistory) {
+                        Icon(
+                            Icons.Default.History,
+                            contentDescription = "練習履歴",
+                            tint = Color.White
+                        )
+                    }
+                    IconButton(onClick = onDictionary) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.MenuBook,
+                            contentDescription = "マイ表現辞書",
+                            tint = Color.White
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF4A7C59),
                     titleContentColor = Color.White
@@ -88,6 +140,21 @@ fun ScenarioListScreen(
                 }
             }
 
+            // ── 初回ヘルプカード ───────────────────────────────────────────────
+            if (!helpDismissed) {
+                FirstTimeHelpCard(
+                    onDismiss = {
+                        helpPrefs.edit().putBoolean("help_card_dismissed", true).apply()
+                        helpDismissed = true
+                    },
+                    onStartChoice = {
+                        selectedTab = 0
+                        helpPrefs.edit().putBoolean("help_card_dismissed", true).apply()
+                        helpDismissed = true
+                    }
+                )
+            }
+
             // ── モード切り替えタブ ─────────────────────────────────────────────
             ScrollableTabRow(
                 selectedTabIndex = selectedTab,
@@ -118,18 +185,45 @@ fun ScenarioListScreen(
             }
 
             // ── モード説明テキスト ──────────────────────────────────────────────
-            Text(
-                text = tabs[selectedTab].description,
-                fontSize = 12.sp,
-                color = Color(0xFF666666),
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = tabs[selectedTab].description,
+                    fontSize = 12.sp,
+                    color = Color(0xFF666666),
+                )
+                IconButton(
+                    onClick = { showModeHelp = true },
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = "モード説明",
+                        tint = Color(0xFFAAAAAA),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
 
             // ── シナリオリスト ─────────────────────────────────────────────────
             LazyColumn(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // ランダム開始カード
+                item {
+                    RandomStartCard(
+                        scenarios = vm.scenarios,
+                        currentMode = currentMode,
+                        onScenarioSelected = onScenarioSelected
+                    )
+                }
+
                 Difficulty.entries.forEach { difficulty ->
                     item {
                         Text(
@@ -149,6 +243,131 @@ fun ScenarioListScreen(
                     }
                 }
                 item { Spacer(modifier = Modifier.height(16.dp)) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FirstTimeHelpCard(
+    onDismiss: () -> Unit,
+    onStartChoice: () -> Unit,
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF8E1)),
+        shape = RoundedCornerShape(0.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "はじめての方へ",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = Color(0xFF5D4037)
+                )
+                TextButton(
+                    onClick = onDismiss,
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
+                    modifier = Modifier.height(28.dp)
+                ) {
+                    Text("×", fontSize = 16.sp, color = Color(0xFF888888))
+                }
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+            Text("・まずは「選択式」から始めるのがおすすめです", fontSize = 13.sp, lineHeight = 20.sp, color = Color(0xFF5D4037))
+            Text("・このアプリは正しい助言をする練習ではなく、相手の気持ちを受け止める練習です", fontSize = 13.sp, lineHeight = 20.sp, color = Color(0xFF5D4037))
+            Text("・慣れてきたら「ガイド付き」→「自由回答」と進むと使いやすいです", fontSize = 13.sp, lineHeight = 20.sp, color = Color(0xFF5D4037))
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF888888))
+                ) {
+                    Text("閉じる", fontSize = 13.sp)
+                }
+                Button(
+                    onClick = onStartChoice,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A7C59))
+                ) {
+                    Text("選択式から始める", fontSize = 13.sp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RandomStartCard(
+    scenarios: List<Scenario>,
+    currentMode: PlayMode,
+    onScenarioSelected: (Scenario, PlayMode) -> Unit,
+) {
+    var selectedDifficulty by remember { mutableStateOf<Difficulty?>(null) }
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8F3)),
+        border = BorderStroke(1.dp, Color(0xFF4A7C59).copy(alpha = 0.4f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Text(
+                text = "ランダムで始める",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color(0xFF2E5C3A)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 難易度フィルターチップ
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                FilterChip(
+                    selected = selectedDifficulty == null,
+                    onClick = { selectedDifficulty = null },
+                    label = { Text("全難易度", fontSize = 11.sp) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Color(0xFF4A7C59),
+                        selectedLabelColor = Color.White
+                    )
+                )
+                Difficulty.entries.forEach { diff ->
+                    FilterChip(
+                        selected = selectedDifficulty == diff,
+                        onClick = {
+                            selectedDifficulty = if (selectedDifficulty == diff) null else diff
+                        },
+                        label = { Text(diff.label, fontSize = 11.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0xFF4A7C59),
+                            selectedLabelColor = Color.White
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Button(
+                onClick = {
+                    val pool = if (selectedDifficulty == null) scenarios
+                               else scenarios.filter { it.difficulty == selectedDifficulty }
+                    pool.randomOrNull()?.let { scenario ->
+                        onScenarioSelected(scenario, currentMode)
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A7C59))
+            ) {
+                Text("ランダムで始める", fontSize = 15.sp)
             }
         }
     }

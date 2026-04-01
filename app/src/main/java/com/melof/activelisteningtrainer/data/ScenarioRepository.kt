@@ -1458,5 +1458,307 @@ object ScenarioRepository {
             ),
             sampleResponse = "まだ言葉にならなくていいよ。ゆっくり聞くね"
         ),
+
+        // ════════════════════════════════════════════════════════════════════
+        // 11. 低発話・沈黙への応答
+        // ════════════════════════════════════════════════════════════════════
+
+        Scenario(
+            id = "AL-031",
+            category = ScenarioCategory.LOW_VERBAL_OR_SILENCE,
+            difficulty = Difficulty.BEGINNER,
+            title = "何から話せばいいかわからない",
+            situation = "友人が何か悩んでいそうだが、うまく言葉にできない様子で話しかけてきた。",
+            utterance = "なんか……うまく言えないんだけど、何から話せばいいかわからない",
+            hint = "「整理しなくていい」という許可を渡す。内容を急かさない。",
+            choiceOptions = listOf(
+                ChoiceOption(
+                    text = "うまくまとまらなくていいよ。あなたのペースで話してくれれば",
+                    isCorrect = true,
+                    badType = null,
+                    explanation = "整理を急がせず、相手のペースを尊重しています。"
+                ),
+                ChoiceOption(
+                    text = "どこから話せばいいと思う？",
+                    isCorrect = false,
+                    badType = "bad_interrogation",
+                    explanation = "「どこから？」と聞いても、言葉にできていない相手には答えられません。"
+                ),
+                ChoiceOption(
+                    text = "落ち着いて、順番に話してみて",
+                    isCorrect = false,
+                    badType = "bad_advice",
+                    explanation = "「順番に」という指示は、まとめられない相手に余計な負担をかけます。"
+                ),
+                ChoiceOption(
+                    text = "大丈夫、話せばすぐ整理できるよ",
+                    isCorrect = false,
+                    badType = "bad_minimization",
+                    explanation = "「すぐ整理できる」は相手の難しさを軽視しています。"
+                ),
+            ),
+            freeResponseScoring = FreeResponseScoring(
+                targetSlots = listOf(ActiveSkill.SAFE_PACING, ActiveSkill.ACCEPTANCE),
+                optionalSlots = listOf(ActiveSkill.PROMPT),
+                penaltyFocus = listOf(PenaltyType.INTERROGATION, PenaltyType.EARLY_CLARIFICATION, PenaltyType.ADVICE),
+                positiveKeywords = listOf("まとまらなくていい", "整理できなくていい", "ゆっくり", "あなたのペース", "待ってる"),
+                negativeKeywords = listOf("どこから", "順番に", "すぐ整理", "落ち着いて"),
+                customFeedback = mapOf(
+                    "SAFE_PACING" to "「まとまらなくていい」「ゆっくりでいい」など、相手のペースを許す言葉を入れてみましょう。",
+                    "ACCEPTANCE" to "「わかった」「聞いてるよ」など、今ここにいることを伝える言葉が安心感を作ります。",
+                    "INTERROGATION" to "言葉が出てこない相手に「何が？」「どこから？」は逆効果です。"
+                )
+            ),
+            sampleResponse = "うまくまとまらなくていいよ。あなたのペースで話してくれれば"
+        ),
+
+        Scenario(
+            id = "AL-032",
+            category = ScenarioCategory.LOW_VERBAL_OR_SILENCE,
+            difficulty = Difficulty.INTERMEDIATE,
+            title = "別に大したことじゃない",
+            situation = "相手が少し傷ついていそうだが、引っ込めようとしている。無理に開かせようとすると防衛が強まる。",
+            utterance = "別に……大したことじゃないし。話してもしょうがないから",
+            hint = "閉じていること自体を受け止める。話す／話さないの選択肢を相手に返す。",
+            choiceOptions = listOf(
+                ChoiceOption(
+                    text = "話したくなければ全然いいよ。でも、もし気になったら聞くね",
+                    isCorrect = true,
+                    badType = null,
+                    explanation = "選択肢を相手に返しながら、扉を開けたままにしています。"
+                ),
+                ChoiceOption(
+                    text = "いや、絶対大したことあるでしょ",
+                    isCorrect = false,
+                    badType = "bad_judgment",
+                    explanation = "「大したことある」と決めつけるのは、相手の引っ込めた気持ちを踏み込みすぎています。"
+                ),
+                ChoiceOption(
+                    text = "ちゃんと話してみてよ",
+                    isCorrect = false,
+                    badType = "bad_interrogation",
+                    explanation = "「ちゃんと話して」は圧になります。閉じている相手にはさらに閉じさせます。"
+                ),
+                ChoiceOption(
+                    text = "話した方が絶対すっきりするよ",
+                    isCorrect = false,
+                    badType = "bad_advice",
+                    explanation = "話すことを強く勧めるのも圧の一種です。相手のペースを奪います。"
+                ),
+            ),
+            freeResponseScoring = FreeResponseScoring(
+                targetSlots = listOf(ActiveSkill.ACCEPTANCE, ActiveSkill.SAFE_PACING),
+                optionalSlots = listOf(ActiveSkill.PROMPT),
+                penaltyFocus = listOf(PenaltyType.INTERROGATION, PenaltyType.JUDGMENT, PenaltyType.ADVICE),
+                positiveKeywords = listOf("話したくなければ", "いいよ", "気になったら", "待ってる", "聞くね", "選択"),
+                negativeKeywords = listOf("絶対大したこと", "ちゃんと話して", "すっきりする", "話した方が"),
+                customFeedback = mapOf(
+                    "ACCEPTANCE" to "「そっか」「それでいいよ」など、引っ込めようとする気持ちをそのまま受け止めましょう。",
+                    "SAFE_PACING" to "「話したくなければいい」と相手に選択権を渡すことが、かえって話しやすさを作ります。",
+                    "JUDGMENT" to "「大したことある」と判断するのは相手の気持ちへの上書きです。"
+                )
+            ),
+            sampleResponse = "話したくなければ全然いいよ。でも、気になったらいつでも聞くね"
+        ),
+
+        Scenario(
+            id = "AL-033",
+            category = ScenarioCategory.LOW_VERBAL_OR_SILENCE,
+            difficulty = Difficulty.TRAP,
+            title = "沈黙が気まずい（崩しトラップ）",
+            situation = "相談の途中で相手が黙り込んだ。こちらが焦って会話を埋めたくなる罠。",
+            utterance = "……うまくまとまらない",
+            hint = "沈黙は失敗ではない。聞き手の焦りで会話を動かさないこと。",
+            choiceOptions = listOf(
+                ChoiceOption(
+                    text = "まとまらなくていいよ。そのまま話してくれれば",
+                    isCorrect = true,
+                    badType = null,
+                    explanation = "まとめることへの圧を外しながら、場を開けたままにしています。"
+                ),
+                ChoiceOption(
+                    text = "つまり、こういうこと？",
+                    isCorrect = false,
+                    badType = "bad_premature_reframe",
+                    explanation = "まだまとまっていない段階で要約すると、相手の言葉を上書きしてしまいます。"
+                ),
+                ChoiceOption(
+                    text = "何が言いたいの？",
+                    isCorrect = false,
+                    badType = "bad_interrogation",
+                    explanation = "まとめられない相手に「何が言いたい？」は追い詰めます。"
+                ),
+                ChoiceOption(
+                    text = "気にしすぎじゃない？",
+                    isCorrect = false,
+                    badType = "bad_minimization",
+                    explanation = "まとまらない感覚を軽く扱っています。相手の戸惑いが否定されます。"
+                ),
+            ),
+            freeResponseScoring = FreeResponseScoring(
+                targetSlots = listOf(ActiveSkill.ACCEPTANCE, ActiveSkill.SAFE_PACING),
+                optionalSlots = listOf(ActiveSkill.PROMPT),
+                penaltyFocus = listOf(PenaltyType.INTERROGATION, PenaltyType.PREMATURE_REFRAME, PenaltyType.MINIMIZATION),
+                positiveKeywords = listOf("まとまらなくていい", "そのまま", "ゆっくり", "急がなくていい", "待ってる"),
+                negativeKeywords = listOf("つまり", "何が言いたい", "気にしすぎ", "要するに"),
+                customFeedback = mapOf(
+                    "ACCEPTANCE" to "「まとまらなくていい」という一言が、相手の沈黙を受け止めます。",
+                    "SAFE_PACING" to "沈黙に耐えることも傾聴の技術です。急いで埋めなくて大丈夫です。",
+                    "PREMATURE_REFRAME" to "まだ言葉になっていない段階での要約は、相手の言いたいことを決めつけます。"
+                )
+            ),
+            sampleResponse = "まとまらなくていいよ。そのまま話してくれれば"
+        ),
+
+        // ════════════════════════════════════════════════════════════════════
+        // 12. 修復と助言への橋渡し
+        // ════════════════════════════════════════════════════════════════════
+
+        Scenario(
+            id = "AL-034",
+            category = ScenarioCategory.REPAIR_AND_BRIDGE,
+            difficulty = Difficulty.BEGINNER,
+            title = "どうしたらいいと思う？",
+            situation = "一通り気持ちを話したあと、相手が少し落ち着いて意見を求めてきた。",
+            utterance = "少し落ち着いてきた。こういう時、どうしたらいいと思う？",
+            hint = "助言を求められても、すぐ答えを出さない。相手の主体性を残しながら一歩進む。",
+            choiceOptions = listOf(
+                ChoiceOption(
+                    text = "少し楽になってきたんだね。あなたはどうしたいと思ってる？",
+                    isCorrect = true,
+                    badType = null,
+                    explanation = "落ち着きを受け止めつつ、相手に主体性を返しています。"
+                ),
+                ChoiceOption(
+                    text = "じゃあ、こうすればいいよ",
+                    isCorrect = false,
+                    badType = "bad_advice",
+                    explanation = "すぐに答えを出すと、相手が自分で考える余地が消えます。"
+                ),
+                ChoiceOption(
+                    text = "それなら答えは簡単だよ",
+                    isCorrect = false,
+                    badType = "bad_minimization",
+                    explanation = "「簡単」と言うと、悩んでいた相手の気持ちを軽くしてしまいます。"
+                ),
+                ChoiceOption(
+                    text = "まず私だったらこうする",
+                    isCorrect = false,
+                    badType = "bad_self_talk",
+                    explanation = "「私だったら」と始めると、焦点が自分に移ってしまいます。"
+                ),
+            ),
+            freeResponseScoring = FreeResponseScoring(
+                targetSlots = listOf(ActiveSkill.ACCEPTANCE, ActiveSkill.PROMPT),
+                optionalSlots = listOf(ActiveSkill.SUMMARY_LIKE),
+                penaltyFocus = listOf(PenaltyType.ADVICE, PenaltyType.SELF_TALK, PenaltyType.MINIMIZATION),
+                positiveKeywords = listOf("楽になった", "少し落ち着いた", "あなたはどう", "どうしたい", "主体"),
+                negativeKeywords = listOf("じゃあこうすれば", "答えは", "私だったら", "簡単だよ"),
+                customFeedback = mapOf(
+                    "ACCEPTANCE" to "「少し楽になってきたんだね」と落ち着きを受け止めてから次に進みましょう。",
+                    "PROMPT" to "「あなたはどうしたいと思ってる？」と相手に主体性を返すのが自然な橋渡しです。",
+                    "ADVICE" to "助言を求められても、すぐ答えを出す前に「あなたはどう思う？」を挟みましょう。"
+                )
+            ),
+            sampleResponse = "少し楽になってきたんだね。あなたはどうしたいと思ってる？"
+        ),
+
+        Scenario(
+            id = "AL-035",
+            category = ScenarioCategory.REPAIR_AND_BRIDGE,
+            difficulty = Difficulty.INTERMEDIATE,
+            title = "先に励ましすぎた",
+            situation = "相手が落ち込んでいる場面で、聞き手が「大丈夫だよ」と言ってしまった後。相手が反応している。",
+            utterance = "いや……今、大丈夫って言われてもあんまり入ってこない",
+            hint = "言い訳せず修復する。相手の感覚を優先する。自分の正しさを守らない。",
+            choiceOptions = listOf(
+                ChoiceOption(
+                    text = "そうだよね。急に大丈夫って言いすぎた。まだしんどいよね",
+                    isCorrect = true,
+                    badType = null,
+                    explanation = "ズレを認めて修復し、相手の感覚に戻っています。"
+                ),
+                ChoiceOption(
+                    text = "でも本当に大丈夫だから",
+                    isCorrect = false,
+                    badType = "bad_judgment",
+                    explanation = "自分の言葉が正しいと主張すると、相手の「入ってこない」という感覚が否定されます。"
+                ),
+                ChoiceOption(
+                    text = "励ましただけなのに",
+                    isCorrect = false,
+                    badType = "bad_self_talk",
+                    explanation = "自分の意図を説明すると、焦点が相手から自分に移ります。"
+                ),
+                ChoiceOption(
+                    text = "じゃあどう言えばよかったの？",
+                    isCorrect = false,
+                    badType = "bad_interrogation",
+                    explanation = "相手に正解を聞くのは負担を転嫁しています。"
+                ),
+            ),
+            freeResponseScoring = FreeResponseScoring(
+                targetSlots = listOf(ActiveSkill.EMOTIONAL_REFLECTION, ActiveSkill.ACCEPTANCE),
+                optionalSlots = listOf(ActiveSkill.SAFE_PACING),
+                penaltyFocus = listOf(PenaltyType.JUDGMENT, PenaltyType.SELF_TALK, PenaltyType.INTERROGATION),
+                positiveKeywords = listOf("そうだよね", "言い方が", "まだしんどい", "入ってこなかったね", "ごめん", "修復"),
+                negativeKeywords = listOf("本当に大丈夫", "励ましただけ", "どう言えば", "悪くない"),
+                customFeedback = mapOf(
+                    "EMOTIONAL_REFLECTION" to "「まだしんどいよね」と相手の感覚をそのまま言葉にして返しましょう。",
+                    "ACCEPTANCE" to "「そうだよね」とズレを認めることが、修復の第一歩です。",
+                    "JUDGMENT" to "「本当に大丈夫」と押し返すのは、相手の感覚への上書きです。"
+                )
+            ),
+            sampleResponse = "そうだよね。急に大丈夫って言いすぎた。まだしんどい感じがあるよね"
+        ),
+
+        Scenario(
+            id = "AL-036",
+            category = ScenarioCategory.REPAIR_AND_BRIDGE,
+            difficulty = Difficulty.TRAP,
+            title = "答えを言ってよ（崩しトラップ）",
+            situation = "相手が強く結論を求めていて、聞き手が解決役に引っ張られやすい場面。",
+            utterance = "もういいから、結局どうしたらいいかだけ言ってよ",
+            hint = "圧に引っ張られずペースを守る。少しだけ受け止めを残してから整理に入る。",
+            choiceOptions = listOf(
+                ChoiceOption(
+                    text = "早く解決したくて焦ってるんだね。今の気持ちを少しだけ聞かせてもらえる？",
+                    isCorrect = true,
+                    badType = null,
+                    explanation = "焦りを受け止めつつ、相手の主体性を保ちながら整理に移ろうとしています。"
+                ),
+                ChoiceOption(
+                    text = "じゃあこうすればいいよ",
+                    isCorrect = false,
+                    badType = "bad_advice",
+                    explanation = "圧に引っ張られてすぐ答えを出すと、受け止めが抜けたまま進みます。"
+                ),
+                ChoiceOption(
+                    text = "それくらい自分で決めなよ",
+                    isCorrect = false,
+                    badType = "bad_judgment",
+                    explanation = "「自分で決めなよ」は相手の焦りと依存を突き放します。"
+                ),
+                ChoiceOption(
+                    text = "正解はひとつじゃないよ",
+                    isCorrect = false,
+                    badType = "bad_premature_reframe",
+                    explanation = "気持ちを受け止める前の正論は、相手の「焦り」に届きません。"
+                ),
+            ),
+            freeResponseScoring = FreeResponseScoring(
+                targetSlots = listOf(ActiveSkill.EMOTIONAL_REFLECTION, ActiveSkill.PROMPT),
+                optionalSlots = listOf(ActiveSkill.SUMMARY_LIKE),
+                penaltyFocus = listOf(PenaltyType.ADVICE, PenaltyType.JUDGMENT, PenaltyType.PREMATURE_REFRAME),
+                positiveKeywords = listOf("焦ってる", "急ぎたい", "早く解決", "気持ち", "聞かせて", "少しだけ"),
+                negativeKeywords = listOf("じゃあこうすれば", "自分で決め", "正解は", "答えは"),
+                customFeedback = mapOf(
+                    "EMOTIONAL_REFLECTION" to "「早く解決したくて焦ってるんだね」と、圧の裏にある焦りを受け止めましょう。",
+                    "PROMPT" to "「今の気持ちを少しだけ聞かせてもらえる？」と一歩手前で踏み止まれると◎",
+                    "ADVICE" to "求められても、すぐ答えを出す前に一拍受け止めを入れましょう。"
+                )
+            ),
+            sampleResponse = "早く解決したくて焦ってるんだね。今どんな気持ちか、少しだけ聞かせてもらえる？"
+        ),
     )
 }

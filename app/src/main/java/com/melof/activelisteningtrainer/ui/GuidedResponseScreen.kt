@@ -38,6 +38,9 @@ fun GuidedResponseScreen(
 ) {
     val scenario by vm.currentScenario.collectAsStateWithLifecycle()
     val scoreResult by vm.scoreResult.collectAsStateWithLifecycle()
+    val llmScore by vm.llmScore.collectAsStateWithLifecycle()
+    val llmLoading by vm.llmLoading.collectAsStateWithLifecycle()
+    val llmError by vm.llmError.collectAsStateWithLifecycle()
 
     // 結果表示中は true
     val hasResult = scoreResult != null
@@ -184,6 +187,15 @@ fun GuidedResponseScreen(
                     // ── 結果表示（インライン） ────────────────────────────────────
                     scoreResult?.let { result ->
                         GuidedResultSection(sc, result)
+
+                        AiScoreButton(
+                            loading   = llmLoading,
+                            hasResult = llmScore != null,
+                            hasApiKey = vm.hasApiKey(),
+                            onClick   = { vm.requestLlmScore() }
+                        )
+                        llmScore?.let { LlmFeedbackCard(it) }
+                        llmError?.let { LlmErrorCard(it) }
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -346,49 +358,17 @@ private fun GuidedResultSection(sc: Scenario, result: ScoreResult) {
     val targetAchieved = result.slotResults.count { it.skill in targetSlots && it.achieved }
     val targetTotal = targetSlots.size
     val triggeredPenalties = result.penaltyResults.filter { it.triggered }
-    val allClear = targetAchieved == targetTotal && triggeredPenalties.isEmpty()
 
     // あなたの返答
-    Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text("あなたの返答", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Color.Gray)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = result.input, fontSize = 15.sp, lineHeight = 24.sp)
-        }
-    }
+    InputResponseCard(input = result.input)
 
     // スコアバッジ
-    val scoreColor = when {
-        allClear                              -> Color(0xFF2E7D32)
-        targetAchieved >= (targetTotal + 1) / 2 -> Color(0xFFF57F17)
-        else                                  -> Color(0xFFB00020)
-    }
-    Card(colors = CardDefaults.cardColors(containerColor = scoreColor.copy(alpha = 0.1f))) {
-        Row(
-            modifier = Modifier.padding(14.dp).fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = if (allClear) "クリア！" else "もう少し",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = scoreColor
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = "必須 $targetAchieved / $targetTotal",
-                fontSize = 16.sp,
-                color = scoreColor
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "${result.totalScore}pt",
-                fontSize = 16.sp,
-                color = scoreColor
-            )
-        }
-    }
+    ScoreBadge(
+        targetAchieved = targetAchieved,
+        targetTotal    = targetTotal,
+        totalScore     = result.totalScore,
+        hasPenalty     = triggeredPenalties.isNotEmpty()
+    )
 
     // スキル達成チェック
     Card(
@@ -448,51 +428,16 @@ private fun GuidedResultSection(sc: Scenario, result: ScoreResult) {
     }
 
     // 未達スキルのフィードバック
-    val missedSlots = result.slotResults.filter { it.skill in targetSlots && !it.achieved }
-    if (missedSlots.isNotEmpty()) {
-        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD))) {
-            Column(modifier = Modifier.padding(14.dp)) {
-                Text("次の練習ポイント", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF1565C0))
-                Spacer(modifier = Modifier.height(8.dp))
-                missedSlots.forEach { slotResult ->
-                    val feedback = sc.freeResponseScoring.customFeedback[slotResult.skill.name]
-                        ?: defaultSlotAdvice(slotResult.skill)
-                    Text(text = "・$feedback", fontSize = 13.sp, lineHeight = 20.sp)
-                    Spacer(modifier = Modifier.height(4.dp))
-                }
-            }
+    val missedAdvice = result.slotResults
+        .filter { it.skill in targetSlots && !it.achieved }
+        .map { slotResult ->
+            sc.freeResponseScoring.customFeedback[slotResult.skill.name]
+                ?: defaultSlotAdvice(slotResult.skill)
         }
-    }
+    AdviceCard(advice = missedAdvice)
 
     // 文例
-    val sample = sc.sampleResponse
-    if (sample.isNotEmpty()) {
-        var expanded by rememberSaveable { mutableStateOf(false) }
-        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFF3E5F5))) {
-            Column(modifier = Modifier.padding(14.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("文例を見る", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF6A1B9A))
-                    TextButton(onClick = { expanded = !expanded }) {
-                        Text(if (expanded) "閉じる" else "表示", fontSize = 13.sp, color = Color(0xFF6A1B9A))
-                    }
-                }
-                if (expanded) {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(text = sample, fontSize = 14.sp, lineHeight = 24.sp)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "※ あくまで一例です。",
-                        fontSize = 11.sp,
-                        color = Color(0xFF9E9E9E)
-                    )
-                }
-            }
-        }
-    }
+    SampleResponseCard(sampleResponse = sc.sampleResponse)
 }
 
 // ── ヘルパー関数 ───────────────────────────────────────────────────────────────
@@ -507,11 +452,3 @@ private fun skillHintPhrases(skill: ActiveSkill): List<String> = when (skill) {
     ActiveSkill.SAFE_PACING          -> listOf("ゆっくりでいいよ", "急がなくていい")
 }
 
-private fun defaultSlotAdvice(skill: ActiveSkill): String = when (skill) {
-    ActiveSkill.EMOTIONAL_REFLECTION -> "「それはつらいね」など、相手の感情を言葉にして返してみましょう"
-    ActiveSkill.ACCEPTANCE           -> "「そうなんだね」「聞いてるよ」など、受け止めの言葉を入れてみましょう"
-    ActiveSkill.PROMPT               -> "「もう少し話してみて」など、相手が続けやすい言葉を足してみましょう"
-    ActiveSkill.LIGHT_FOCUS          -> "「特にどの部分が？」など、軽く焦点を当ててみましょう"
-    ActiveSkill.SUMMARY_LIKE         -> "「つまり〜ということだったんだね」など、相手の話を整理して返しましょう"
-    ActiveSkill.SAFE_PACING          -> "「ゆっくりでいいよ」など、相手のペースを尊重する言葉を意識しましょう"
-}

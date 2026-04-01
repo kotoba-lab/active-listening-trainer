@@ -60,7 +60,9 @@ val ScenarioCategory.scenarioType: ScenarioType
 
         ScenarioCategory.ADVICE_TRAP,
         ScenarioCategory.SELF_TALK_TRAP,
-        ScenarioCategory.EARLY_FOCUS_TRAP -> ScenarioType.CONFUSION
+        ScenarioCategory.EARLY_FOCUS_TRAP,
+        ScenarioCategory.LOW_VERBAL_OR_SILENCE,
+        ScenarioCategory.REPAIR_AND_BRIDGE -> ScenarioType.CONFUSION
     }
 
 /**

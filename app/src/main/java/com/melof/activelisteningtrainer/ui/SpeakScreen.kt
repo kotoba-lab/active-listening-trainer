@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -107,6 +108,9 @@ fun SpeakScreen(
                     }
                 }
 
+                // 返答のコツカード
+                ResponseTipsCard()
+
                 // ヒント
                 if (sc.hint.isNotEmpty()) {
                     Text(
@@ -184,6 +188,54 @@ fun SpeakScreen(
                 ) {
                     Text("採点する", fontSize = 18.sp)
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ResponseTipsCard() {
+    var expanded by rememberSaveable { mutableStateOf(true) }
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF8E1)),
+        shape = RoundedCornerShape(8.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "返答のコツ",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    color = Color(0xFF5D4037)
+                )
+                TextButton(
+                    onClick = { expanded = !expanded },
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
+                    modifier = Modifier.height(28.dp)
+                ) {
+                    Text(
+                        text = if (expanded) "閉じる" else "開く",
+                        fontSize = 12.sp,
+                        color = Color(0xFF888888)
+                    )
+                }
+            }
+            if (expanded) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text("・まずは解決より先に、気持ちを受け止める", fontSize = 13.sp, lineHeight = 20.sp, color = Color(0xFF5D4037))
+                Text("・短くても大丈夫です", fontSize = 13.sp, lineHeight = 20.sp, color = Color(0xFF5D4037))
+                Text("・助言・評価・正論から入らない方が高評価になりやすいです", fontSize = 13.sp, lineHeight = 20.sp, color = Color(0xFF5D4037))
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "例:「それはしんどかったね」「つらかったね」",
+                    fontSize = 12.sp,
+                    color = Color(0xFF888888)
+                )
             }
         }
     }
