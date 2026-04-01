@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>データ削除リクエスト – アクティブリスニング トレーナー</title>
+  <style>
+    :root {
+      --bg: #fafafa;
+      --surface: #ffffff;
+      --text: #1a1a1a;
+      --muted: #555;
+      --accent: #2563eb;
+      --border: #e5e7eb;
+      --green-bg: #f0fdf4;
+      --green-border: #86efac;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.8;
+      padding: 2rem 1rem;
+    }
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2.5rem 2rem;
+    }
+    h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 2rem; }
+    h2 {
+      font-size: 1.05rem;
+      margin-top: 1.8rem;
+      margin-bottom: 0.6rem;
+      padding-left: 0.7rem;
+      border-left: 4px solid var(--accent);
+    }
+    p { margin-bottom: 0.8rem; color: var(--muted); }
+    .card {
+      background: var(--green-bg);
+      border: 1px solid var(--green-border);
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      margin: 1rem 0;
+    }
+    .card p { color: #166534; margin-bottom: 0; }
+    .btn {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.6rem 1.4rem;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+    .btn:hover { opacity: 0.85; }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>データ削除リクエスト</h1>
+  <p class="meta">アクティブリスニング トレーナー　／　開発者：melofla8os-ai</p>
+
+  <h2>端末内データの削除</h2>
+  <div class="card">
+    <p>練習ログ・APIキー・ユーザー辞書などの端末内データは、<strong>アプリをアンインストールすることで完全に削除</strong>されます。</p>
+  </div>
+  <p>アプリ内の「履歴を削除」機能からも練習ログを手動で削除できます。</p>
+
+  <h2>Claude API（Anthropic）に送信したデータ</h2>
+  <p>
+    採点実行時に回答テキストが Anthropic 社のサーバーに送信されます。
+    このデータの削除については <strong>Anthropic 社のプライバシーポリシー</strong> に従います。
+  </p>
+  <p>
+    詳細は
+    <a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener">
+      https://www.anthropic.com/legal/privacy
+    </a>
+    をご確認ください。
+  </p>
+
+  <h2>その他のリクエスト</h2>
+  <p>
+    上記以外の削除リクエストやご不明点は、GitHub の Issues からご連絡ください。
+    できる限り対応いたします。
+  </p>
+  <a class="btn" href="https://github.com/kotoba-lab/active-listening-trainer/issues" target="_blank" rel="noopener">
+    Issues でリクエストする
+  </a>
+</div>
+</body>
+</html>
