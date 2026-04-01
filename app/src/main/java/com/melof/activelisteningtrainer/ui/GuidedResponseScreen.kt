@@ -10,8 +10,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.melof.activelisteningtrainer.data.ActiveSkill
-import com.melof.activelisteningtrainer.data.PenaltyType
 import com.melof.activelisteningtrainer.data.ScoreResult
 import com.melof.activelisteningtrainer.data.Scenario
 import com.melof.activelisteningtrainer.viewmodel.TrainerViewModel
@@ -364,90 +361,31 @@ private fun SkillHintRow(skill: ActiveSkill, required: Boolean) {
 
 @Composable
 private fun GuidedResultSection(sc: Scenario, result: ScoreResult) {
-    val targetSlots = sc.freeResponseScoring.targetSlots
-    val targetAchieved = result.slotResults.count { it.skill in targetSlots && it.achieved }
-    val targetTotal = targetSlots.size
-    val triggeredPenalties = result.penaltyResults.filter { it.triggered }
+    val uiState = result.toFeedbackUiState()
 
     // あなたの返答
-    InputResponseCard(input = result.input)
+    InputResponseCard(input = uiState.input)
 
     // スコアバッジ
     ScoreBadge(
-        targetAchieved = targetAchieved,
-        targetTotal    = targetTotal,
-        totalScore     = result.totalScore,
-        hasPenalty     = triggeredPenalties.isNotEmpty()
+        targetAchieved = uiState.requiredAchieved,
+        targetTotal    = uiState.requiredTotal,
+        totalScore     = uiState.totalScore,
+        hasPenalty     = uiState.triggeredPenalties.isNotEmpty()
     )
 
-    // スキル達成チェック
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Text("スキル結果", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-            Spacer(modifier = Modifier.height(8.dp))
-            result.slotResults.filter { it.skill in targetSlots }.forEach { slotResult ->
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = if (slotResult.achieved) Icons.Default.Check else Icons.Default.Close,
-                            contentDescription = null,
-                            tint = if (slotResult.achieved) Color(0xFF2E7D32) else Color(0xFFB00020),
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(text = slotResult.skill.label, fontSize = 14.sp)
-                    }
-                    Text(
-                        text = if (slotResult.achieved) "+${slotResult.skill.score}pt" else "---",
-                        fontSize = 13.sp,
-                        color = if (slotResult.achieved) Color(0xFF2E7D32) else Color(0xFFAAAAAA)
-                    )
-                }
-            }
+    // スキルチェックリスト（共通カード）
+    SkillChecklistCard(
+        requiredSlots      = uiState.requiredSlots,
+        bonusSlots         = uiState.bonusSlots,
+        triggeredPenalties = uiState.triggeredPenalties,
+    )
 
-            // ペナルティ
-            if (triggeredPenalties.isNotEmpty()) {
-                HorizontalDivider(color = Color(0xFFF0F0F0), modifier = Modifier.padding(vertical = 6.dp))
-                Text("⚠ 気をつけたい要素", fontSize = 12.sp, color = Color(0xFFB00020))
-                Spacer(modifier = Modifier.height(4.dp))
-                triggeredPenalties.forEach { pr ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(text = pr.penalty.label, fontSize = 13.sp, color = Color(0xFFB00020))
-                        Text(
-                            text = "${pr.penalty.score}pt",
-                            fontSize = 13.sp,
-                            color = Color(0xFFB00020)
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    // 未達スキルのフィードバック
-    val missedAdvice = result.slotResults
-        .filter { it.skill in targetSlots && !it.achieved }
-        .map { slotResult ->
-            sc.freeResponseScoring.customFeedback[slotResult.skill.name]
-                ?: defaultSlotAdvice(slotResult.skill)
-        }
-    AdviceCard(advice = missedAdvice)
+    // 次の練習ポイント
+    AdviceCard(advice = uiState.advice)
 
     // 文例
-    SampleResponseCard(sampleResponse = sc.sampleResponse)
+    SampleResponseCard(sampleResponse = uiState.sampleResponse)
 }
 
 // ── ヘルパー関数 ───────────────────────────────────────────────────────────────

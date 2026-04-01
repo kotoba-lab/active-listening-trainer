@@ -50,7 +50,8 @@ fun FeedbackScreen(
         }
     ) { padding ->
         result?.let { score ->
-            val targetSlots = score.scenario.freeResponseScoring.targetSlots
+            val uiState    = score.toFeedbackUiState()
+            val strongCopy = buildStrongFeedbackCopy(score)
 
             Column(
                 modifier = Modifier
@@ -61,10 +62,9 @@ fun FeedbackScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // あなたの返答
-                InputResponseCard(input = score.input)
+                InputResponseCard(input = uiState.input)
 
                 // 強フィードバックコピー（特定ペナルティが強ければ強調表示）
-                val strongCopy = buildStrongFeedbackCopy(score)
                 if (strongCopy != null) {
                     Card(
                         colors = CardDefaults.cardColors(containerColor = Color(0xFF212121)),
@@ -89,7 +89,7 @@ fun FeedbackScreen(
                     }
                 }
 
-                // スキルスロット評価
+                // スキルスロット評価（登録UI付き詳細版）
                 Text("スキル評価", fontWeight = FontWeight.Bold, fontSize = 16.sp)
 
                 Card(
@@ -97,28 +97,19 @@ fun FeedbackScreen(
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
-                        // 必須スロット
-                        val targetResults = score.slotResults.filter { it.skill in targetSlots }
-                        targetResults.forEachIndexed { index, slotResult ->
+                        uiState.requiredSlots.forEachIndexed { index, slotResult ->
                             SkillSlotRow(
-                                slotResult       = slotResult,
-                                required         = true,
-                                // カテゴリに何か登録済みではなく、提案フレーズ自体が登録済みかを判定する
+                                slotResult          = slotResult,
+                                required            = true,
                                 isAlreadyRegistered = userPhrases[slotResult.skill]
                                     ?.contains(suggestPhrase(slotResult.skill)) == true,
-                                onRegister       = { phrase -> vm.registerPhrase(slotResult.skill, phrase) }
+                                onRegister          = { phrase -> vm.registerPhrase(slotResult.skill, phrase) }
                             )
-                            if (index != targetResults.lastIndex) {
+                            if (index != uiState.requiredSlots.lastIndex) {
                                 HorizontalDivider(color = Color(0xFFF0F0F0), thickness = 0.5.dp)
                             }
                         }
-
-                        // ボーナス（任意スロット達成）
-                        val optionalSlots = score.scenario.freeResponseScoring.optionalSlots
-                        val bonusResults = score.slotResults.filter {
-                            it.skill in optionalSlots && it.achieved
-                        }
-                        bonusResults.forEach { slotResult ->
+                        uiState.bonusSlots.forEach { slotResult ->
                             HorizontalDivider(color = Color(0xFFF0F0F0), thickness = 0.5.dp)
                             SkillSlotRow(
                                 slotResult          = slotResult,
@@ -131,8 +122,7 @@ fun FeedbackScreen(
                 }
 
                 // ペナルティ検出
-                val triggeredPenalties = score.penaltyResults.filter { it.triggered }
-                NgWordsCard(triggeredPenalties)
+                NgWordsCard(uiState.triggeredPenalties)
 
                 // 結果の読み方ガイド
                 Text(
@@ -143,20 +133,18 @@ fun FeedbackScreen(
                 )
 
                 // スコアバッジ
-                val targetAchieved = score.slotResults.count { it.skill in targetSlots && it.achieved }
-                val targetTotal    = targetSlots.size
                 ScoreBadge(
-                    targetAchieved = targetAchieved,
-                    targetTotal    = targetTotal,
-                    totalScore     = score.totalScore,
-                    hasPenalty     = triggeredPenalties.isNotEmpty()
+                    targetAchieved = uiState.requiredAchieved,
+                    targetTotal    = uiState.requiredTotal,
+                    totalScore     = uiState.totalScore,
+                    hasPenalty     = uiState.triggeredPenalties.isNotEmpty()
                 )
 
                 // 文例カード
-                SampleResponseCard(sampleResponse = scenario?.sampleResponse ?: "")
+                SampleResponseCard(sampleResponse = uiState.sampleResponse)
 
                 // 次の練習ポイント
-                AdviceCard(advice = buildAdvice(score))
+                AdviceCard(advice = uiState.advice)
 
                 // AI採点
                 AiScoreButton(
@@ -327,30 +315,6 @@ private fun suggestPhrase(skill: ActiveSkill): String = when (skill) {
     ActiveSkill.LIGHT_FOCUS          -> "特にどの部分が一番しんどかった？"
     ActiveSkill.SUMMARY_LIKE         -> "つまり〜ということだったんだね"
     ActiveSkill.SAFE_PACING          -> "ゆっくりでいいよ"
-}
-
-private fun buildAdvice(score: ScoreResult): List<String> {
-    val advice = mutableListOf<String>()
-    val targetSlots = score.scenario.freeResponseScoring.targetSlots
-
-    score.slotResults
-        .filter { it.skill in targetSlots && !it.achieved }
-        .forEach { slot ->
-            val customFeedback = score.scenario.freeResponseScoring
-                .customFeedback[slot.skill.name]
-            advice.add(customFeedback ?: defaultSlotAdvice(slot.skill))
-        }
-
-    score.penaltyResults
-        .filter { it.triggered }
-        .take(2)   // 一度に表示するペナルティは2件まで
-        .forEach { penalty ->
-            val customFeedback = score.scenario.freeResponseScoring
-                .customFeedback[penalty.penalty.name]
-            advice.add(customFeedback ?: defaultPenaltyAdvice(penalty.penalty))
-        }
-
-    return advice
 }
 
 /**

@@ -13,10 +13,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.Check
 import com.melof.activelisteningtrainer.data.ActiveSkill
 import com.melof.activelisteningtrainer.data.LlmScoreResult
 import com.melof.activelisteningtrainer.data.PenaltyResult
 import com.melof.activelisteningtrainer.data.PenaltyType
+import com.melof.activelisteningtrainer.data.ScoreResult
+import com.melof.activelisteningtrainer.data.SlotResult
 
 // ── 共通カード：あなたの返答 ───────────────────────────────────────────────────
 
@@ -306,6 +309,161 @@ internal fun defaultPenaltyAdvice(penalty: PenaltyType): String = when (penalty)
         "まだ気持ちが整理されていない段階でのポジティブ変換は逆効果です。"
     PenaltyType.JOIN_ATTACK ->
         "相手と一緒に第三者を攻撃すると、感情的な連帯が強化されてしまいます。"
+}
+
+// ── FeedbackUiState ───────────────────────────────────────────────────────────
+
+/**
+ * FeedbackScreen / GuidedResultSection で共有するUI用データ。
+ * ScoreResult から toFeedbackUiState() で生成する。
+ */
+data class FeedbackUiState(
+    val input: String,
+    val requiredSlots: List<SlotResult>,
+    val bonusSlots: List<SlotResult>,
+    val triggeredPenalties: List<PenaltyResult>,
+    val requiredAchieved: Int,
+    val requiredTotal: Int,
+    val totalScore: Int,
+    val sampleResponse: String,
+    val advice: List<String>,
+)
+
+fun ScoreResult.toFeedbackUiState(): FeedbackUiState {
+    val targetSlots = scenario.freeResponseScoring.targetSlots
+    val optionalSlots = scenario.freeResponseScoring.optionalSlots
+    val triggered = penaltyResults.filter { it.triggered }
+
+    val advice = mutableListOf<String>()
+    slotResults.filter { it.skill in targetSlots && !it.achieved }.forEach { s ->
+        advice.add(scenario.freeResponseScoring.customFeedback[s.skill.name] ?: defaultSlotAdvice(s.skill))
+    }
+    triggered.take(2).forEach { p ->
+        advice.add(scenario.freeResponseScoring.customFeedback[p.penalty.name] ?: defaultPenaltyAdvice(p.penalty))
+    }
+
+    return FeedbackUiState(
+        input              = input,
+        requiredSlots      = slotResults.filter { it.skill in targetSlots },
+        bonusSlots         = slotResults.filter { it.skill in optionalSlots && it.achieved },
+        triggeredPenalties = triggered,
+        requiredAchieved   = slotResults.count { it.skill in targetSlots && it.achieved },
+        requiredTotal      = targetSlots.size,
+        totalScore         = totalScore,
+        sampleResponse     = scenario.sampleResponse,
+        advice             = advice,
+    )
+}
+
+// ── 共通カード：スキルチェックリスト（登録UI無し・ガイド付き等で使用） ──────────
+
+@Composable
+internal fun SkillChecklistCard(
+    requiredSlots: List<SlotResult>,
+    bonusSlots: List<SlotResult>,
+    triggeredPenalties: List<PenaltyResult>,
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Text(
+                text = "スキル結果",
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.sp
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            requiredSlots.forEach { slotResult ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = if (slotResult.achieved) Icons.Default.Check else Icons.Default.Close,
+                            contentDescription = null,
+                            tint = if (slotResult.achieved) Color(0xFF2E7D32) else Color(0xFFB00020),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(text = slotResult.skill.label, fontSize = 14.sp)
+                    }
+                    Text(
+                        text = if (slotResult.achieved) "+${slotResult.skill.score}pt" else "---",
+                        fontSize = 13.sp,
+                        color = if (slotResult.achieved) Color(0xFF2E7D32) else Color(0xFFAAAAAA)
+                    )
+                }
+            }
+
+            if (triggeredPenalties.isNotEmpty()) {
+                HorizontalDivider(
+                    color = Color(0xFFF0F0F0),
+                    modifier = Modifier.padding(vertical = 6.dp)
+                )
+                Text(
+                    text = "⚠ 気をつけたい要素",
+                    fontSize = 12.sp,
+                    color = Color(0xFFB00020)
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                triggeredPenalties.forEach { pr ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = pr.penalty.label,
+                            fontSize = 13.sp,
+                            color = Color(0xFFB00020)
+                        )
+                        Text(
+                            text = "${pr.penalty.score}pt",
+                            fontSize = 13.sp,
+                            color = Color(0xFFB00020)
+                        )
+                    }
+                }
+            }
+
+            if (bonusSlots.isNotEmpty()) {
+                HorizontalDivider(
+                    color = Color(0xFFF0F0F0),
+                    modifier = Modifier.padding(vertical = 6.dp)
+                )
+                bonusSlots.forEach { slotResult ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "${slotResult.skill.label}（ボーナス）",
+                            fontSize = 13.sp,
+                            color = Color(0xFF757575)
+                        )
+                        Text(
+                            text = "+${slotResult.skill.score}pt",
+                            fontSize = 13.sp,
+                            color = Color(0xFF2E7D32)
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 
 // ── AI採点ボタン ─────────────────────────────────────────────────────────────
