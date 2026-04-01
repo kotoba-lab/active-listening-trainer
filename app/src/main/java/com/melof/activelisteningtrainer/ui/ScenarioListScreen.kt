@@ -55,7 +55,9 @@ fun ScenarioListScreen(
     val helpPrefs = remember { context.getSharedPreferences("help_prefs", Context.MODE_PRIVATE) }
     var helpDismissed by remember { mutableStateOf(helpPrefs.getBoolean("help_card_dismissed", false)) }
     var showModeHelp by remember { mutableStateOf(false) }
-    val masteredIds by vm.masteredScenarioIds.collectAsStateWithLifecycle()
+    val masteredIds        by vm.masteredScenarioIds.collectAsStateWithLifecycle()
+    val todayDone          by vm.todayDone.collectAsStateWithLifecycle()
+    val daysSinceLastPlay  by vm.daysSinceLastPlay.collectAsStateWithLifecycle()
 
     if (showModeHelp) {
         val currentMode = tabs[selectedTab].mode
@@ -260,6 +262,25 @@ fun ScenarioListScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // 復帰ボーナスカード（3日以上空いた場合、ノルマより優先表示）
+                if (daysSinceLastPlay >= 3) {
+                    item {
+                        ReturnBonusCard(
+                            onStart = {
+                                val scenario = vm.scenarios
+                                    .filter { it.difficulty == com.melof.activelisteningtrainer.data.Difficulty.BEGINNER }
+                                    .randomOrNull()
+                                if (scenario != null) onScenarioSelected(scenario, PlayMode.CHOICE)
+                            }
+                        )
+                    }
+                } else {
+                    // 今日のノルマバナー
+                    item {
+                        TodayQuotaBanner(todayDone = todayDone)
+                    }
+                }
+
                 // ランダム開始カード
                 item {
                     RandomStartCard(
@@ -414,6 +435,61 @@ private fun RandomStartCard(
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A7C59))
             ) {
                 Text("ランダムで始める", fontSize = 15.sp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun TodayQuotaBanner(todayDone: Boolean) {
+    val bgColor = if (todayDone) Color(0xFFE8F5E9) else Color(0xFFFFF8E1)
+    val textColor = if (todayDone) Color(0xFF2E7D32) else Color(0xFF5D4037)
+    val text = if (todayDone) "今日のノルマ達成！　もっとやりたければ続けよう"
+               else "今日はまだ0問　1問やればノルマ達成！"
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = bgColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Text(
+            text = text,
+            fontSize = 13.sp,
+            color = textColor,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 10.dp)
+        )
+    }
+}
+
+@Composable
+private fun ReturnBonusCard(onStart: () -> Unit) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
+        border = BorderStroke(1.dp, Color(0xFFFF9800)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Text(
+                text = "おかえりなさい！",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color(0xFFE65100)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "しばらく間が空いたので、まず入門問題で慣らしましょう",
+                fontSize = 13.sp,
+                color = Color(0xFF5D4037),
+                lineHeight = 20.sp
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Button(
+                onClick = onStart,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE65100))
+            ) {
+                Text("ウォームアップ問題を始める", fontSize = 14.sp)
             }
         }
     }
