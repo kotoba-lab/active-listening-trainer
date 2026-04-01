@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.melof.activelisteningtrainer.data.Difficulty
 import com.melof.activelisteningtrainer.data.Scenario
 import com.melof.activelisteningtrainer.viewmodel.TrainerViewModel
@@ -54,6 +55,7 @@ fun ScenarioListScreen(
     val helpPrefs = remember { context.getSharedPreferences("help_prefs", Context.MODE_PRIVATE) }
     var helpDismissed by remember { mutableStateOf(helpPrefs.getBoolean("help_card_dismissed", false)) }
     var showModeHelp by remember { mutableStateOf(false) }
+    val masteredIds by vm.masteredScenarioIds.collectAsStateWithLifecycle()
 
     if (showModeHelp) {
         val currentMode = tabs[selectedTab].mode
@@ -281,6 +283,7 @@ fun ScenarioListScreen(
                         ScenarioCard(
                             scenario = scenario,
                             mode = currentMode,
+                            mastered = scenario.id in masteredIds,
                             onClick = { onScenarioSelected(scenario, currentMode) }
                         )
                     }
@@ -420,6 +423,7 @@ private fun RandomStartCard(
 fun ScenarioCard(
     scenario: Scenario,
     mode: PlayMode,
+    mastered: Boolean = false,
     onClick: () -> Unit,
 ) {
     val bgColor = when (scenario.difficulty) {
@@ -479,15 +483,34 @@ fun ScenarioCard(
                     color = Color(0xFF888888)
                 )
             }
-            SuggestionChip(
-                onClick = {},
-                enabled = false,
-                label = { Text(text = badgeText, fontSize = 11.sp) },
-                colors = SuggestionChipDefaults.suggestionChipColors(
-                    disabledContainerColor = badgeBg,
-                    disabledLabelColor = badgeFg
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                if (mastered) {
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = Color(0xFF2E7D32)
+                    ) {
+                        Text(
+                            text = "✓ 習得",
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+                SuggestionChip(
+                    onClick = {},
+                    enabled = false,
+                    label = { Text(text = badgeText, fontSize = 11.sp) },
+                    colors = SuggestionChipDefaults.suggestionChipColors(
+                        disabledContainerColor = badgeBg,
+                        disabledLabelColor = badgeFg
+                    )
                 )
-            )
+            }
         }
     }
 }
