@@ -56,10 +56,23 @@ fun ScenarioListScreen(
     var showModeHelp by remember { mutableStateOf(false) }
 
     if (showModeHelp) {
-        val (modeDesc1, modeDesc2) = when (tabs[selectedTab].mode) {
-            PlayMode.CHOICE -> "4つの返しから、いちばん相手を受け止めやすいものを選ぶモードです" to "まずは感覚をつかみたい人向けです"
-            PlayMode.GUIDED -> "意識したいスキルを見ながら、自分の言葉で返すモードです" to "自由回答の前に練習したい人に向いています"
-            PlayMode.FREE   -> "ヒントなしで、自分の言葉だけで返すモードです" to "実戦に近い形で練習したい人向けです"
+        val currentMode = tabs[selectedTab].mode
+        val (modeDesc1, modeDesc2, modeNudge) = when (currentMode) {
+            PlayMode.CHOICE -> Triple(
+                "4つの返しから、いちばん相手を受け止めやすいものを選ぶモードです",
+                "まずは感覚をつかみたい人向けです",
+                null
+            )
+            PlayMode.GUIDED -> Triple(
+                "意識したいスキルを見ながら、自分の言葉で返すモードです",
+                "自由回答の前に練習したい人に向いています",
+                "まず「選択式」で返しのパターンを覚えてから始めると効果的です"
+            )
+            PlayMode.FREE -> Triple(
+                "ヒントなしで、自分の言葉だけで返すモードです",
+                "実戦に近い形で練習したい人向けです",
+                "「選択式」→「ガイド付き」で型を身につけてからがおすすめです"
+            )
         }
         AlertDialog(
             onDismissRequest = { showModeHelp = false },
@@ -67,8 +80,38 @@ fun ScenarioListScreen(
             text = {
                 Column {
                     Text(text = modeDesc1, fontSize = 14.sp, lineHeight = 22.sp)
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(text = modeDesc2, fontSize = 13.sp, color = Color(0xFF666666))
+
+                    // 推奨学習順序ナッジ
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Text(
+                        text = "推奨学習順序",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF444444)
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    listOf(PlayMode.CHOICE to "選択式", PlayMode.GUIDED to "ガイド付き", PlayMode.FREE to "自由回答")
+                        .forEach { (mode, label) ->
+                            val isActive = mode == currentMode
+                            Text(
+                                text = if (isActive) "▶  $label  ← 今ここ" else "　  $label",
+                                fontSize = 13.sp,
+                                fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isActive) Color(0xFF1565C0) else Color(0xFFAAAAAA),
+                                lineHeight = 22.sp
+                            )
+                        }
+                    if (modeNudge != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = modeNudge,
+                            fontSize = 12.sp,
+                            color = Color(0xFF888888),
+                            lineHeight = 18.sp
+                        )
+                    }
                 }
             },
             confirmButton = {
