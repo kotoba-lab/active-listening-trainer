@@ -110,7 +110,9 @@ fun FeedbackScreen(
                             SkillSlotRow(
                                 slotResult       = slotResult,
                                 required         = true,
-                                isAlreadyRegistered = userPhrases[slotResult.skill]?.isNotEmpty() == true,
+                                // カテゴリに何か登録済みではなく、提案フレーズ自体が登録済みかを判定する
+                                isAlreadyRegistered = userPhrases[slotResult.skill]
+                                    ?.contains(suggestPhrase(slotResult.skill)) == true,
                                 onRegister       = { phrase -> vm.registerPhrase(slotResult.skill, phrase) }
                             )
                             if (index != targetResults.lastIndex) {
@@ -366,15 +368,24 @@ private fun SkillSlotRow(
                     }
                 }
                 else -> {
+                    val validationError = com.melof.activelisteningtrainer.data.UserDictionaryStore
+                        .validationErrorMessage(phraseText)
                     Column(modifier = Modifier.padding(top = 4.dp)) {
                         OutlinedTextField(
                             value = phraseText,
-                            onValueChange = { if (it.length <= 40) phraseText = it },
-                            placeholder = { Text("短いフレーズを入力（40字以内）", fontSize = 12.sp) },
+                            onValueChange = { if (it.length <= 24) phraseText = it },
+                            placeholder = { Text("核フレーズを入力（6〜24字）", fontSize = 12.sp) },
                             singleLine = true,
+                            isError = phraseText.isNotEmpty() && validationError != null,
                             textStyle = LocalTextStyle.current.copy(fontSize = 13.sp),
                             modifier = Modifier.fillMaxWidth(),
-                            supportingText = { Text("${phraseText.length}/40", fontSize = 11.sp) }
+                            supportingText = {
+                                if (phraseText.isNotEmpty() && validationError != null) {
+                                    Text(validationError, fontSize = 11.sp, color = Color(0xFFB00020))
+                                } else {
+                                    Text("${phraseText.length}/24", fontSize = 11.sp)
+                                }
+                            }
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -385,12 +396,14 @@ private fun SkillSlotRow(
                             }
                             Button(
                                 onClick = {
-                                    if (phraseText.isNotBlank()) {
-                                        onRegister(phraseText.trim())
+                                    val t = phraseText.trim()
+                                    if (com.melof.activelisteningtrainer.data.UserDictionaryStore.isValidPhrase(t)) {
+                                        onRegister(t)
                                         showEditor = false
                                     }
                                 },
-                                enabled = phraseText.isNotBlank()
+                                enabled = phraseText.isNotBlank() &&
+                                    com.melof.activelisteningtrainer.data.UserDictionaryStore.isValidPhrase(phraseText.trim())
                             ) {
                                 Text("保存", fontSize = 12.sp)
                             }

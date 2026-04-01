@@ -11,6 +11,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,7 +30,7 @@ fun SpeakScreen(
     onBack: () -> Unit
 ) {
     val scenario by vm.currentScenario.collectAsStateWithLifecycle()
-    var localText by remember { mutableStateOf("") }
+    var localText by rememberSaveable { mutableStateOf("") }
 
     val speechLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
