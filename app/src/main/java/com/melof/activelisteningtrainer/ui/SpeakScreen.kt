@@ -130,7 +130,7 @@ fun SpeakScreen(
                     )
                 }
 
-                Divider(color = Color(0xFFE0E0E0))
+                HorizontalDivider(color = Color(0xFFE0E0E0))
 
                 // 音声認識結果 + 手動編集エリア
                 OutlinedTextField(

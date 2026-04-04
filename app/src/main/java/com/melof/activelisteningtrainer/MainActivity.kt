@@ -11,6 +11,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.melof.activelisteningtrainer.ui.SettingsScreen
 import com.melof.activelisteningtrainer.ui.UserDictionaryScreen
 import com.melof.activelisteningtrainer.ui.PracticeHistoryScreen
 import com.melof.activelisteningtrainer.ui.ChoiceModeScreen
@@ -49,12 +50,20 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onDependencyMode = { navController.navigate("dep_list") },
                                 onDictionary = { navController.navigate("dictionary") },
-                                onHistory = { navController.navigate("history") }
+                                onHistory = { navController.navigate("history") },
+                                onSettings = { navController.navigate("settings") }
                             )
                         }
 
                         composable("dictionary") {
                             UserDictionaryScreen(
+                                vm = vm,
+                                onBack = { navController.popBackStack() }
+                            )
+                        }
+
+                        composable("settings") {
+                            SettingsScreen(
                                 vm = vm,
                                 onBack = { navController.popBackStack() }
                             )
@@ -126,7 +135,8 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onNext = {
                                     navController.popBackStack("scenarios", inclusive = false)
-                                }
+                                },
+                                onGoToSettings = { navController.navigate("settings") }
                             )
                         }
                     }

@@ -6,11 +6,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,6 +41,7 @@ fun ScenarioListScreen(
     onDependencyMode: () -> Unit = {},
     onDictionary: () -> Unit = {},
     onHistory: () -> Unit = {},
+    onSettings: () -> Unit = {},
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
@@ -60,7 +62,6 @@ fun ScenarioListScreen(
     val daysSinceLastPlay  by vm.daysSinceLastPlay.collectAsStateWithLifecycle()
 
     if (showModeHelp) {
-        val currentMode = tabs[selectedTab].mode
         val (modeDesc1, modeDesc2, modeNudge) = when (currentMode) {
             PlayMode.CHOICE -> Triple(
                 "4つの返しから、いちばん相手を受け止めやすいものを選ぶモードです",
@@ -143,6 +144,13 @@ fun ScenarioListScreen(
                             tint = Color.White
                         )
                     }
+                    IconButton(onClick = onSettings) {
+                        Icon(
+                            Icons.Default.Settings,
+                            contentDescription = "設定",
+                            tint = Color.White
+                        )
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF4A7C59),
@@ -160,7 +168,7 @@ fun ScenarioListScreen(
             Card(
                 onClick = onDependencyMode,
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF5C4A7C)),
-                shape = RoundedCornerShape(0.dp),
+                shape = RectangleShape,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -322,7 +330,7 @@ private fun FirstTimeHelpCard(
 ) {
     Card(
         colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF8E1)),
-        shape = RoundedCornerShape(0.dp),
+        shape = RectangleShape,
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {

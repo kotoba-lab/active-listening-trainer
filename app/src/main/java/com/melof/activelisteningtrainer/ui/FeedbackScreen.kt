@@ -29,7 +29,8 @@ import com.melof.activelisteningtrainer.viewmodel.TrainerViewModel
 fun FeedbackScreen(
     vm: TrainerViewModel,
     onRetry: () -> Unit,
-    onNext: () -> Unit
+    onNext: () -> Unit,
+    onGoToSettings: () -> Unit = {},
 ) {
     val result by vm.scoreResult.collectAsStateWithLifecycle()
     val scenario by vm.currentScenario.collectAsStateWithLifecycle()
@@ -148,10 +149,11 @@ fun FeedbackScreen(
 
                 // AI採点
                 AiScoreButton(
-                    loading   = llmLoading,
-                    hasResult = llmScore != null,
-                    hasApiKey = vm.hasApiKey(),
-                    onClick   = { vm.requestLlmScore() }
+                    loading        = llmLoading,
+                    hasResult      = llmScore != null,
+                    hasApiKey      = vm.hasApiKey(),
+                    onClick        = { vm.requestLlmScore() },
+                    onGoToSettings = onGoToSettings
                 )
                 llmScore?.let { LlmFeedbackCard(it) }
                 llmError?.let { LlmErrorCard(it) }

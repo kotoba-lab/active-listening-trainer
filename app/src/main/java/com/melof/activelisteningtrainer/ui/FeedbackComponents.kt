@@ -474,10 +474,36 @@ internal fun AiScoreButton(
     hasResult: Boolean,
     hasApiKey: Boolean,
     onClick: () -> Unit,
+    onGoToSettings: () -> Unit,
 ) {
+    var showNoKeyDialog by remember { mutableStateOf(false) }
+
+    if (showNoKeyDialog) {
+        AlertDialog(
+            onDismissRequest = { showNoKeyDialog = false },
+            title = { Text("APIキーが未設定です", fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    text = "AI採点を使うには Claude APIキーが必要です。\n設定画面でキーを入力してください。",
+                    fontSize = 14.sp,
+                    lineHeight = 22.sp
+                )
+            },
+            confirmButton = {
+                Button(onClick = {
+                    showNoKeyDialog = false
+                    onGoToSettings()
+                }) { Text("設定へ") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNoKeyDialog = false }) { Text("閉じる") }
+            }
+        )
+    }
+
     OutlinedButton(
-        onClick = onClick,
-        enabled = !loading && hasApiKey,
+        onClick = { if (!hasApiKey) showNoKeyDialog = true else onClick() },
+        enabled = !loading,
         modifier = Modifier.fillMaxWidth().height(48.dp),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF5C4A7C))
     ) {

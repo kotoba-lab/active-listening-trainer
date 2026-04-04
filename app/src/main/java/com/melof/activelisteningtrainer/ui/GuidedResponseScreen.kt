@@ -196,10 +196,11 @@ fun GuidedResponseScreen(
                         GuidedResultSection(sc, result)
 
                         AiScoreButton(
-                            loading   = llmLoading,
-                            hasResult = llmScore != null,
-                            hasApiKey = vm.hasApiKey(),
-                            onClick   = { vm.requestLlmScore() }
+                            loading        = llmLoading,
+                            hasResult      = llmScore != null,
+                            hasApiKey      = vm.hasApiKey(),
+                            onClick        = { vm.requestLlmScore() },
+                            onGoToSettings = {}
                         )
                         llmScore?.let { LlmFeedbackCard(it) }
                         llmError?.let { LlmErrorCard(it) }

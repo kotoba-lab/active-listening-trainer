@@ -8,7 +8,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -53,18 +52,13 @@ fun UserDictionaryScreen(
         }
     ) { padding ->
         if (skillsWithPhrases.isEmpty()) {
-            // 空状態でも API キー設定は表示する
-            Column(
+            Box(
                 modifier = Modifier
                     .padding(padding)
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp, vertical = 24.dp)
+                    .fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "登録済みのフレーズはありません",
                         fontSize = 15.sp,
@@ -78,8 +72,6 @@ fun UserDictionaryScreen(
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                 }
-                ApiKeySection(vm)
-                Spacer(modifier = Modifier.height(16.dp))
             }
         } else {
             LazyColumn(
@@ -113,62 +105,9 @@ fun UserDictionaryScreen(
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                // APIキー設定
-                item {
-                    ApiKeySection(vm)
-                }
-
-                item {
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun ApiKeySection(vm: TrainerViewModel) {
-    var keyText by rememberSaveable { mutableStateOf(vm.loadApiKey()) }
-    var saved by rememberSaveable { mutableStateOf(false) }
-
-    Column(modifier = Modifier.padding(top = 8.dp)) {
-        HorizontalDivider(color = Color(0xFFE0E0E0))
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = "Claude API設定",
-            fontWeight = FontWeight.Bold,
-            fontSize = 14.sp,
-            color = Color(0xFF5C4A7C)
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = "AI採点機能に使用します。キーは端末内に保存されます。",
-            fontSize = 11.sp,
-            color = Color(0xFF888888)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = keyText,
-            onValueChange = { keyText = it; saved = false },
-            label = { Text("APIキー（sk-ant-...）") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp),
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(
-            onClick = {
-                vm.saveApiKey(keyText)
-                saved = true
-            },
-            enabled = keyText.isNotBlank() && !saved,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5C4A7C))
-        ) {
-            Text(if (saved) "保存済み" else "保存する", fontSize = 14.sp)
         }
     }
 }

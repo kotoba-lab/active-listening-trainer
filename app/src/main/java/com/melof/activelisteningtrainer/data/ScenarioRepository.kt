@@ -1760,5 +1760,333 @@ object ScenarioRepository {
             ),
             sampleResponse = "早く解決したくて焦ってるんだね。今どんな気持ちか、少しだけ聞かせてもらえる？"
         ),
+
+        // ════════════════════════════════════════════════════════════════════
+        // 13. エキスパート
+        // ════════════════════════════════════════════════════════════════════
+
+        Scenario(
+            id = "AL-037",
+            category = ScenarioCategory.REPAIR_AND_BRIDGE,
+            difficulty = Difficulty.EXPERT,
+            title = "もう話さないほうがいいかな",
+            situation = "相手が、以前こちらに相談したときのズレを持ち出してきた。言い訳したくなるが、まず修復が必要な場面。",
+            utterance = "この前相談したときも正論ばっかで、もう話さないほうがいいかなって思った",
+            hint = "正しさを守らず、まず「話しにくくなった感じ」を受け止めて修復する。",
+            choiceOptions = listOf(
+                ChoiceOption(
+                    text = "わかってもらえない感じがして、話しにくくなったんだね。そう感じさせてたならごめん、今はちゃんと聞きたい",
+                    isCorrect = true,
+                    badType = null,
+                    explanation = "傷つきと距離の両方を受け止めつつ、言い訳せず修復に入れています。"
+                ),
+                ChoiceOption(
+                    text = "でも正論を言ったつもりはないよ",
+                    isCorrect = false,
+                    badType = "bad_judgment",
+                    explanation = "事実確認や自己弁護を先にすると、相手の傷つきが置き去りになります。"
+                ),
+                ChoiceOption(
+                    text = "そのとき何て言ったか覚えてる？",
+                    isCorrect = false,
+                    badType = "bad_early_clarification",
+                    explanation = "まず修復が必要な段階で詳細確認に入るのは早すぎます。"
+                ),
+                ChoiceOption(
+                    text = "そんなふうに受け取られるのは心外だな",
+                    isCorrect = false,
+                    badType = "bad_self_talk",
+                    explanation = "自分の気持ちを守りにいくと、会話の焦点が相手から外れます。"
+                ),
+            ),
+            freeResponseScoring = FreeResponseScoring(
+                targetSlots = listOf(ActiveSkill.EMOTIONAL_REFLECTION, ActiveSkill.ACCEPTANCE),
+                optionalSlots = listOf(ActiveSkill.PROMPT),
+                penaltyFocus = listOf(PenaltyType.JUDGMENT, PenaltyType.SELF_TALK, PenaltyType.EARLY_CLARIFICATION),
+                positiveKeywords = listOf("話しにくくなった", "わかってもらえない", "距離を置きたくなった", "傷ついた"),
+                negativeKeywords = listOf("正論のつもりは", "心外", "何て言った", "誤解"),
+                customFeedback = mapOf(
+                    "ACCEPTANCE" to "まずは「そう感じたんだね」と、相手の受け取りそのものを受け止めるのが修復の入口です。",
+                    "EMOTIONAL_REFLECTION" to "「話しにくくなった」「わかってもらえない感じ」など、関係が閉じた感覚を言葉にできると◎",
+                    "JUDGMENT" to "自分の正しさを守るほど、相手はさらに話しにくくなります。"
+                )
+            ),
+            sampleResponse = "わかってもらえない感じがして、話しにくくなったんだね。そう感じさせてたならごめん、今はちゃんと聞きたい",
+            sampleResponses = listOf(
+                "わかってもらえない感じがして、話しにくくなったんだね。そう感じさせてたならごめん、今はちゃんと聞きたい",
+                "前は正しさで返された感じがして、もう話したくない気持ちになったんだね。まずそこを受け止めたい",
+                "相談しても届かない感じが残ってたんだね。今は言い返さずに聞くから、話せるところからで大丈夫だよ"
+            )
+        ),
+
+        Scenario(
+            id = "AL-038",
+            category = ScenarioCategory.ADVICE_TRAP,
+            difficulty = Difficulty.EXPERT,
+            title = "どうすればいいかだけ教えて",
+            situation = "相手が強く助言を求めているが、その奥には疲弊と無力感がにじんでいる。答え役になりやすい場面。",
+            utterance = "で、結局どうすればいいと思う？ もう自分じゃ何も決められない",
+            hint = "助言要求にそのまま乗らず、まず決められないほどの消耗を拾う。",
+            choiceOptions = listOf(
+                ChoiceOption(
+                    text = "何を選んでもしんどくて、もう自分で決める力が残ってない感じなんだね",
+                    isCorrect = true,
+                    badType = null,
+                    explanation = "助言要求の奥にある無力感を先に受け止めています。"
+                ),
+                ChoiceOption(
+                    text = "まずは一番現実的な方法を選べばいいよ",
+                    isCorrect = false,
+                    badType = "bad_advice",
+                    explanation = "答えを急ぐと、相手の疲弊した状態が置き去りになります。"
+                ),
+                ChoiceOption(
+                    text = "何と何で迷ってるの？",
+                    isCorrect = false,
+                    badType = "bad_early_clarification",
+                    explanation = "整理より先に、決められないほど消耗している感覚の受け止めが必要です。"
+                ),
+                ChoiceOption(
+                    text = "自分のことなんだから自分で決めないと",
+                    isCorrect = false,
+                    badType = "bad_judgment",
+                    explanation = "正論で押すと、相手の無力感が強まります。"
+                ),
+            ),
+            freeResponseScoring = FreeResponseScoring(
+                targetSlots = listOf(ActiveSkill.EMOTIONAL_REFLECTION, ActiveSkill.SUMMARY_LIKE),
+                optionalSlots = listOf(ActiveSkill.ACCEPTANCE),
+                penaltyFocus = listOf(PenaltyType.ADVICE, PenaltyType.JUDGMENT, PenaltyType.EARLY_CLARIFICATION),
+                positiveKeywords = listOf("決める力が残ってない", "何を選んでもしんどい", "もう無理", "疲れきってる"),
+                negativeKeywords = listOf("現実的な方法", "自分で決めないと", "何と何で", "こうすれば"),
+                customFeedback = mapOf(
+                    "EMOTIONAL_REFLECTION" to "「決められない」ではなく「決める力が残っていない」状態として返せると深く届きます。",
+                    "SUMMARY_LIKE" to "選択肢の話に入る前に、疲弊と無力感を整理して返すのがエキスパート問題のポイントです。",
+                    "ADVICE" to "答えを言う前に、まず相手の消耗を受け止めましょう。"
+                )
+            ),
+            sampleResponse = "何を選んでもしんどくて、もう自分で決める力が残ってない感じなんだね",
+            sampleResponses = listOf(
+                "何を選んでもしんどくて、もう自分で決める力が残ってない感じなんだね",
+                "答えだけほしいくらい、考える余力がなくなってるんだね",
+                "判断しなきゃいけないのに、もう自分の中がすり減ってる感じがするんだね"
+            )
+        ),
+
+        Scenario(
+            id = "AL-039",
+            category = ScenarioCategory.SELF_CAUSED,
+            difficulty = Difficulty.EXPERT,
+            title = "私が悪いけど腹も立つ",
+            situation = "相手は自分の非も認めているが、相手の言い方への怒りも抱えている。片方だけ拾うとズレやすい場面。",
+            utterance = "私が悪かったのはわかってる。でもあの言い方は今でも腹立つ",
+            hint = "自責だけでも怒りだけでもなく、両方を一緒に持っている状態を返す。",
+            choiceOptions = listOf(
+                ChoiceOption(
+                    text = "自分にも引っかかるところはあるけど、あの言い方のきつさもずっと残ってるんだね",
+                    isCorrect = true,
+                    badType = null,
+                    explanation = "自責と怒りの両方を切り分けずに受け止めています。"
+                ),
+                ChoiceOption(
+                    text = "自分が悪いってわかってるなら仕方ないよ",
+                    isCorrect = false,
+                    badType = "bad_judgment",
+                    explanation = "自責側だけを強めると、怒りや傷つきが押し込められます。"
+                ),
+                ChoiceOption(
+                    text = "でもその人も正しいことを言ってたんじゃない？",
+                    isCorrect = false,
+                    badType = "bad_premature_reframe",
+                    explanation = "正しさに寄せると、残っている痛みを否定する形になります。"
+                ),
+                ChoiceOption(
+                    text = "どんな言い方をされたの？",
+                    isCorrect = false,
+                    badType = "bad_early_clarification",
+                    explanation = "まずは複雑な感情の混在を受け止めるのが先です。"
+                ),
+            ),
+            freeResponseScoring = FreeResponseScoring(
+                targetSlots = listOf(ActiveSkill.EMOTIONAL_REFLECTION, ActiveSkill.SUMMARY_LIKE),
+                optionalSlots = listOf(ActiveSkill.ACCEPTANCE),
+                penaltyFocus = listOf(PenaltyType.JUDGMENT, PenaltyType.PREMATURE_REFRAME, PenaltyType.EARLY_CLARIFICATION),
+                positiveKeywords = listOf("両方ある", "引っかかる", "きつさが残ってる", "腹立つし後悔もある"),
+                negativeKeywords = listOf("仕方ない", "正しいことを", "どんな言い方", "気にしすぎ"),
+                customFeedback = mapOf(
+                    "EMOTIONAL_REFLECTION" to "怒りだけでなく、痛みや引っかかりとして返せると深く受け止められます。",
+                    "SUMMARY_LIKE" to "「自分にも引っかかるけど、相手の言い方も残っている」と二重構造を整理して返すのがポイントです。",
+                    "PREMATURE_REFRAME" to "正しさの話に寄せるほど、今残っている痛みは見落とされます。"
+                )
+            ),
+            sampleResponse = "自分にも引っかかるところはあるけど、あの言い方のきつさもずっと残ってるんだね",
+            sampleResponses = listOf(
+                "自分にも引っかかるところはあるけど、あの言い方のきつさもずっと残ってるんだね",
+                "悪かった気持ちもあるのに、あの刺さり方は今も消えてないんだね",
+                "自分を責める感じと、あの言い方への腹立たしさが両方残ってるんだね"
+            )
+        ),
+
+        Scenario(
+            id = "AL-040",
+            category = ScenarioCategory.LOW_VERBAL_OR_SILENCE,
+            difficulty = Difficulty.EXPERT,
+            title = "もう疲れた",
+            situation = "相手の言葉が少なく、これ以上言語化する余力も薄い。聞き手が質問で埋めたくなる場面。",
+            utterance = "……別に。うまく言えない。なんかもう疲れた",
+            hint = "言葉の少なさに耐えつつ、疲弊の大きさと相手のペースを守る。",
+            choiceOptions = listOf(
+                ChoiceOption(
+                    text = "うまく言葉にする余裕もないくらい疲れてるんだね。今はゆっくりで大丈夫だよ",
+                    isCorrect = true,
+                    badType = null,
+                    explanation = "疲弊を受け止めながら、話すペースの主導権を相手に返しています。"
+                ),
+                ChoiceOption(
+                    text = "何があったのかだけ教えて",
+                    isCorrect = false,
+                    badType = "bad_interrogation",
+                    explanation = "説明する余力がない相手に追加の言語化を求めています。"
+                ),
+                ChoiceOption(
+                    text = "疲れてるだけなら今日は寝たほうがいいよ",
+                    isCorrect = false,
+                    badType = "bad_advice",
+                    explanation = "助言で閉じると、相手の「話せないしんどさ」が受け止められません。"
+                ),
+                ChoiceOption(
+                    text = "別にってことは大したことないのかな",
+                    isCorrect = false,
+                    badType = "bad_minimization",
+                    explanation = "言葉数の少なさを軽さとみなすのは危険です。"
+                ),
+            ),
+            freeResponseScoring = FreeResponseScoring(
+                targetSlots = listOf(ActiveSkill.SAFE_PACING, ActiveSkill.EMOTIONAL_REFLECTION),
+                optionalSlots = listOf(ActiveSkill.ACCEPTANCE),
+                penaltyFocus = listOf(PenaltyType.INTERROGATION, PenaltyType.ADVICE, PenaltyType.MINIMIZATION),
+                positiveKeywords = listOf("言葉にする余裕もない", "疲れてる", "今はゆっくり", "無理に話さなくていい"),
+                negativeKeywords = listOf("何があった", "寝たほうがいい", "大したことない", "理由を教えて"),
+                customFeedback = mapOf(
+                    "SAFE_PACING" to "説明を引き出すより「今はゆっくりでいい」と場を保つのがこの問題の要点です。",
+                    "EMOTIONAL_REFLECTION" to "「うまく言えない」ではなく、その奥の疲弊の大きさを言葉にできると◎",
+                    "INTERROGATION" to "話す余力がない相手への質問は、さらに消耗させます。"
+                )
+            ),
+            sampleResponse = "うまく言葉にする余裕もないくらい疲れてるんだね。今はゆっくりで大丈夫だよ",
+            sampleResponses = listOf(
+                "うまく言葉にする余裕もないくらい疲れてるんだね。今はゆっくりで大丈夫だよ",
+                "言葉を探すのもしんどいくらい消耗してるんだね。無理にまとめなくていいよ",
+                "もう説明する力も残ってない感じなんだね。今は話せるぶんだけで十分だよ"
+            )
+        ),
+
+        Scenario(
+            id = "AL-041",
+            category = ScenarioCategory.ANGER,
+            difficulty = Difficulty.EXPERT,
+            title = "正しいから余計にしんどい",
+            situation = "相手は相手側の正しさを認めつつも傷ついている。聞き手も正論に引っ張られやすい場面。",
+            utterance = "向こうの言ってることは正しいんだけど、正しいから余計しんどくて",
+            hint = "正しさの判定に乗らず、「刺さった痛み」を中心に返す。",
+            choiceOptions = listOf(
+                ChoiceOption(
+                    text = "反論しにくい正しさだったぶん、余計にきつく刺さった感じがするんだね",
+                    isCorrect = true,
+                    badType = null,
+                    explanation = "正しさそのものではなく、それが刺さった痛みを受け止めています。"
+                ),
+                ChoiceOption(
+                    text = "正しいなら受け止めるしかないよね",
+                    isCorrect = false,
+                    badType = "bad_judgment",
+                    explanation = "正論で畳むと、相手の痛みが見落とされます。"
+                ),
+                ChoiceOption(
+                    text = "でも成長のチャンスだと思えばいいんじゃない？",
+                    isCorrect = false,
+                    badType = "bad_premature_reframe",
+                    explanation = "まだ痛みの中にいる段階での教訓化は逆効果です。"
+                ),
+                ChoiceOption(
+                    text = "具体的に何を言われたの？",
+                    isCorrect = false,
+                    badType = "bad_early_clarification",
+                    explanation = "まずは刺さった感覚そのものを受け止めるのが先です。"
+                ),
+            ),
+            freeResponseScoring = FreeResponseScoring(
+                targetSlots = listOf(ActiveSkill.EMOTIONAL_REFLECTION, ActiveSkill.LIGHT_FOCUS),
+                optionalSlots = listOf(ActiveSkill.ACCEPTANCE),
+                penaltyFocus = listOf(PenaltyType.JUDGMENT, PenaltyType.PREMATURE_REFRAME, PenaltyType.EARLY_CLARIFICATION),
+                positiveKeywords = listOf("きつく刺さった", "反論しにくい", "正しいから余計つらい", "残ってる"),
+                negativeKeywords = listOf("受け止めるしか", "成長のチャンス", "具体的に何を", "気にしすぎ"),
+                customFeedback = mapOf(
+                    "LIGHT_FOCUS" to "「正しさ」ではなく「正しさだったぶん余計に刺さった」という焦点を返せると上級です。",
+                    "EMOTIONAL_REFLECTION" to "論点の正誤ではなく、きつさや刺さり方を言葉にしましょう。",
+                    "JUDGMENT" to "正しいかどうかを確定すると、相手のしんどさはさらに置いていかれます。"
+                )
+            ),
+            sampleResponse = "反論しにくい正しさだったぶん、余計にきつく刺さった感じがするんだね",
+            sampleResponses = listOf(
+                "反論しにくい正しさだったぶん、余計にきつく刺さった感じがするんだね",
+                "間違ってないってわかるからこそ、逃げ場がなくてしんどかったんだね",
+                "正しい内容でも、受け取る側にはかなり痛かったんだね"
+            )
+        ),
+
+        Scenario(
+            id = "AL-042",
+            category = ScenarioCategory.REPAIR_AND_BRIDGE,
+            difficulty = Difficulty.EXPERT,
+            title = "もう自分でもどうしたいかわからない",
+            situation = "相手が長く同じしんどさの中にいて、整理も助言も求め切れていない。受容から橋渡しまで求められる最上位の場面。",
+            utterance = "ずっと同じところでしんどいって言ってるだけで、もう自分でもどうしたいのかわからない",
+            hint = "停滞のしんどさを受け止めたうえで、相手の同意を取りながら一歩だけ整理に橋をかける。",
+            choiceOptions = listOf(
+                ChoiceOption(
+                    text = "同じところを回ってる感じがして、しんどさだけが残ってるんだね。今は整理するだけでも一緒にやってみる？",
+                    isCorrect = true,
+                    badType = null,
+                    explanation = "停滞のつらさを受け止めたうえで、解決ではなく整理への小さな橋渡しができています。"
+                ),
+                ChoiceOption(
+                    text = "じゃあまず目標を決めよう",
+                    isCorrect = false,
+                    badType = "bad_advice",
+                    explanation = "いきなり解決手順に入ると、置いていかれている感覚が強まります。"
+                ),
+                ChoiceOption(
+                    text = "どうしたいかわからないのは考えが足りないからかもね",
+                    isCorrect = false,
+                    badType = "bad_judgment",
+                    explanation = "停滞している相手に評価を加えると、さらに閉じます。"
+                ),
+                ChoiceOption(
+                    text = "何が一番の問題なのか今すぐ決めようか",
+                    isCorrect = false,
+                    badType = "bad_interrogation",
+                    explanation = "整理の前に答えを迫ると、相手の負荷が上がります。"
+                ),
+            ),
+            freeResponseScoring = FreeResponseScoring(
+                targetSlots = listOf(ActiveSkill.EMOTIONAL_REFLECTION, ActiveSkill.SAFE_PACING),
+                optionalSlots = listOf(ActiveSkill.PROMPT, ActiveSkill.SUMMARY_LIKE),
+                penaltyFocus = listOf(PenaltyType.ADVICE, PenaltyType.JUDGMENT, PenaltyType.INTERROGATION),
+                positiveKeywords = listOf("同じところを回ってる", "しんどさだけが残ってる", "整理するだけ", "一緒にやってみる"),
+                negativeKeywords = listOf("目標を決めよう", "考えが足りない", "今すぐ決めよう", "こうすれば"),
+                customFeedback = mapOf(
+                    "EMOTIONAL_REFLECTION" to "「ずっと同じところでしんどい」という停滞感そのものを返せると、この問題の核を押さえられます。",
+                    "SAFE_PACING" to "解決に飛ばず「整理するだけでも」と小さく橋をかけるのが大事です。",
+                    "ADVICE" to "いきなり方針を決めるより、まず相手が考えられる足場を一緒に作りましょう。"
+                )
+            ),
+            sampleResponse = "同じところを回ってる感じがして、しんどさだけが残ってるんだね。今は整理するだけでも一緒にやってみる？",
+            sampleResponses = listOf(
+                "同じところを回ってる感じがして、しんどさだけが残ってるんだね。今は整理するだけでも一緒にやってみる？",
+                "ずっと抱えたままで、自分でも出口が見えなくなってるんだね。すぐ答えじゃなくて、まず少し整理してみようか",
+                "どうしたいか決める前に、今こんがらがってる感じをほどくところからでよさそうだね。一緒にやってみる？"
+            )
+        ),
     )
 }

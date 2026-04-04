@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -57,6 +58,7 @@ class TrainerViewModel(app: Application) : AndroidViewModel(app) {
                 last3.size >= 3 && last3.all { it.passed }
             }.toSet()
         }
+        .flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.Lazily, emptySet())
 
     // ── 今日のノルマ（1問以上回答） ───────────────────────────────────────────────
