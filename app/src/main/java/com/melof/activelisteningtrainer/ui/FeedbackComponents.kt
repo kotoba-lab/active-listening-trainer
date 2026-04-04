@@ -209,8 +209,9 @@ internal fun penaltyWhyReason(penalty: PenaltyType): String = when (penalty) {
 // ── 共通カード：文例を見る ────────────────────────────────────────────────────
 
 @Composable
-internal fun SampleResponseCard(sampleResponse: String) {
-    if (sampleResponse.isEmpty()) return
+internal fun SampleResponseCard(sampleResponses: List<String>) {
+    val responses = sampleResponses.filter { it.isNotBlank() }
+    if (responses.isEmpty()) return
     var expanded by rememberSaveable { mutableStateOf(false) }
     Card(
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF3E5F5)),
@@ -241,7 +242,16 @@ internal fun SampleResponseCard(sampleResponse: String) {
             }
             if (expanded) {
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(text = sampleResponse, fontSize = 14.sp, lineHeight = 24.sp)
+                responses.forEachIndexed { index, response ->
+                    Text(
+                        text = "${index + 1}. $response",
+                        fontSize = 14.sp,
+                        lineHeight = 24.sp
+                    )
+                    if (index != responses.lastIndex) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "※ あくまで一例です。自分の言葉でアレンジしましょう。",
@@ -325,7 +335,7 @@ data class FeedbackUiState(
     val requiredAchieved: Int,
     val requiredTotal: Int,
     val totalScore: Int,
-    val sampleResponse: String,
+    val sampleResponses: List<String>,
     val advice: List<String>,
 )
 
@@ -350,7 +360,7 @@ fun ScoreResult.toFeedbackUiState(): FeedbackUiState {
         requiredAchieved   = slotResults.count { it.skill in targetSlots && it.achieved },
         requiredTotal      = targetSlots.size,
         totalScore         = totalScore,
-        sampleResponse     = scenario.sampleResponse,
+        sampleResponses    = scenario.sampleResponses,
         advice             = advice,
     )
 }

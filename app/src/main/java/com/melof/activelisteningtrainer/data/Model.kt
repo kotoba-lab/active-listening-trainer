@@ -76,6 +76,7 @@ data class Scenario(
     val choiceOptions: List<ChoiceOption>,
     val freeResponseScoring: FreeResponseScoring,
     val sampleResponse: String = "",
+    val sampleResponses: List<String> = listOf(sampleResponse),
 )
 
 // ─── 採点結果 ─────────────────────────────────────────────────────────────────────

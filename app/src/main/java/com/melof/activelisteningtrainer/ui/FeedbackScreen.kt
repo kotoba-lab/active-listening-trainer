@@ -142,7 +142,7 @@ fun FeedbackScreen(
                 )
 
                 // 文例カード
-                SampleResponseCard(sampleResponse = uiState.sampleResponse)
+                SampleResponseCard(sampleResponses = uiState.sampleResponses)
 
                 // 次の練習ポイント
                 AdviceCard(advice = uiState.advice)
@@ -360,4 +360,3 @@ private fun buildStrongFeedbackCopy(score: ScoreResult): String? {
         else -> null
     }
 }
-

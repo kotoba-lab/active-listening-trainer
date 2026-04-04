@@ -386,7 +386,7 @@ private fun GuidedResultSection(sc: Scenario, result: ScoreResult) {
     AdviceCard(advice = uiState.advice)
 
     // 文例
-    SampleResponseCard(sampleResponse = uiState.sampleResponse)
+    SampleResponseCard(sampleResponses = uiState.sampleResponses)
 }
 
 // ── ヘルパー関数 ───────────────────────────────────────────────────────────────
@@ -400,4 +400,3 @@ private fun skillHintPhrases(skill: ActiveSkill): List<String> = when (skill) {
     ActiveSkill.SUMMARY_LIKE         -> listOf("つまり〜ということだね", "〜ということだったんだね")
     ActiveSkill.SAFE_PACING          -> listOf("ゆっくりでいいよ", "急がなくていい")
 }
-
