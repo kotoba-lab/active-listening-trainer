@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>対面練習フィードバック支援</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Hiragino Sans", "Meiryo", sans-serif;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #1a1a1a;
+      background: #f5f5f5;
+    }
+
+    .page {
+      max-width: 640px;
+      margin: 28px auto;
+      padding: 0 16px 48px;
+    }
+
+    /* ヘッダー */
+    .doc-header {
+      border-bottom: 3px solid #2a6496;
+      padding-bottom: 14px;
+      margin-bottom: 28px;
+    }
+    .doc-header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #2a6496;
+      letter-spacing: 0.04em;
+    }
+    .doc-header .subtitle {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    /* 画面の表示切り替え */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* セクション見出し */
+    h2 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      background: #2a6496;
+      padding: 6px 12px;
+      margin: 24px 0 12px;
+      border-radius: 2px;
+    }
+    h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #2a6496;
+      border-left: 3px solid #2a6496;
+      padding-left: 8px;
+      margin: 16px 0 8px;
+    }
+
+    /* 練習カード（セレクター画面） */
+    .practice-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .practice-card {
+      background: #fff;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      padding: 16px 18px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .practice-card:hover {
+      border-color: #2a6496;
+      box-shadow: 0 2px 8px rgba(42,100,150,0.15);
+    }
+    .practice-card .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #2a6496;
+      margin-bottom: 4px;
+    }
+    .practice-card .card-meta {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 6px;
+    }
+    .practice-card .card-purpose {
+      font-size: 13px;
+      color: #333;
+    }
+
+    /* ボックス */
+    .highlight {
+      background: #eaf2fb;
+      border-left: 4px solid #2a6496;
+      padding: 10px 14px;
+      margin: 12px 0;
+      border-radius: 0 2px 2px 0;
+      font-size: 13px;
+    }
+    .note {
+      background: #fffbe6;
+      border: 1px solid #f0c040;
+      padding: 8px 12px;
+      margin: 8px 0;
+      border-radius: 2px;
+      font-size: 12px;
+      color: #7a6000;
+    }
+
+    /* ステップリスト */
+    .step-list { counter-reset: step; padding-left: 0; list-style: none; margin: 8px 0; }
+    .step-list li {
+      counter-increment: step;
+      padding: 7px 10px 7px 40px;
+      position: relative;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 13px;
+    }
+    .step-list li::before {
+      content: counter(step);
+      position: absolute;
+      left: 10px;
+      top: 7px;
+      width: 20px;
+      height: 20px;
+      background: #2a6496;
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    /* 評価フォーム */
+    .criteria-list { list-style: none; padding: 0; margin: 8px 0; }
+    .criteria-item {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+    }
+    .criteria-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 10px;
+    }
+    .rating-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .rating-group label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: #f5f5f5;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      padding: 5px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.1s, border-color 0.1s;
+      user-select: none;
+    }
+    .rating-group input[type="radio"] { display: none; }
+    .rating-group input[type="radio"]:checked + span {
+      font-weight: 700;
+    }
+    .rating-group label:has(input:checked) {
+      background: #2a6496;
+      color: #fff;
+      border-color: #2a6496;
+    }
+    .rating-circle {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .r-excellent { background: #27ae60; color: #fff; }
+    .r-good      { background: #2980b9; color: #fff; }
+    .r-close     { background: #e67e22; color: #fff; }
+    .r-miss      { background: #c0392b; color: #fff; }
+
+    /* 自由記述 */
+    textarea {
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 13px;
+      line-height: 1.6;
+      resize: vertical;
+      min-height: 100px;
+      margin-top: 4px;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #2a6496;
+      box-shadow: 0 0 0 2px rgba(42,100,150,0.15);
+    }
+
+    /* ボタン */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 22px;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary {
+      background: #2a6496;
+      color: #fff;
+      width: 100%;
+      margin-top: 16px;
+      padding: 12px;
+      font-size: 15px;
+    }
+    .btn-secondary {
+      background: #fff;
+      color: #2a6496;
+      border: 2px solid #2a6496;
+    }
+    .btn-copy {
+      background: #27ae60;
+      color: #fff;
+      width: 100%;
+      padding: 12px;
+      font-size: 15px;
+      margin-top: 12px;
+    }
+    .btn-copy.copied {
+      background: #1e8449;
+    }
+    .btn-reset {
+      background: #f5f5f5;
+      color: #666;
+      border: 1px solid #ccc;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    /* 戻るリンク */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: #2a6496;
+      font-size: 13px;
+      cursor: pointer;
+      margin-bottom: 16px;
+      background: none;
+      border: none;
+      font-family: inherit;
+      padding: 0;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    /* プロンプト出力エリア */
+    .prompt-area {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 16px;
+      font-size: 12px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #333;
+      max-height: 420px;
+      overflow-y: auto;
+      margin-top: 8px;
+    }
+
+    /* 使い方ヒント */
+    .usage-hint {
+      background: #eaf2fb;
+      border-left: 4px solid #2a6496;
+      padding: 10px 14px;
+      margin: 16px 0 8px;
+      border-radius: 0 2px 2px 0;
+      font-size: 13px;
+    }
+    .usage-hint ol {
+      padding-left: 20px;
+      margin-top: 6px;
+    }
+    .usage-hint li { margin-bottom: 4px; }
+
+    /* バッジ */
+    .badge {
+      display: inline-block;
+      background: #eaf2fb;
+      color: #2a6496;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    @media (max-width: 480px) {
+      .page { margin: 16px auto; }
+      .rating-group { gap: 6px; }
+      .rating-group label { padding: 5px 10px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="doc-header">
+    <h1>対面練習フィードバック支援</h1>
+    <div class="subtitle">練習後の記録 → LLMフィードバック用プロンプト生成</div>
+  </div>
+
+  <!-- ===== 画面1：練習セレクター ===== -->
+  <div id="screen-select" class="screen active">
+    <div class="highlight">
+      対面練習（Pair / Trio / Solo）が終わったら、練習を選んで記録を入力してください。<br>
+      入力内容をもとにLLMへのフィードバック依頼文を生成します。
+    </div>
+
+    <h2>練習を選ぶ</h2>
+    <div class="practice-cards" id="practice-cards"></div>
+  </div>
+
+  <!-- ===== 画面2：ガイド＋入力フォーム ===== -->
+  <div id="screen-form" class="screen">
+    <button class="back-link" onclick="showScreen('select')">← 練習を選び直す</button>
+
+    <div id="practice-guide"></div>
+
+    <h2>練習記録を入力</h2>
+    <form id="feedback-form" onsubmit="return false;">
+
+      <h3>評価軸</h3>
+      <ul class="criteria-list" id="criteria-list"></ul>
+
+      <h3>自由記述</h3>
+      <div style="font-size:13px; color:#555; margin-bottom:4px;">
+        何が起きたか・相手のフィードバック・気になった点など
+      </div>
+      <textarea id="free-text" placeholder="例：怒りは特定できたが、その下への言及が遅れた。話し手からは「悲しみの方が近かった」とフィードバックあり。"></textarea>
+
+      <button class="btn btn-primary" onclick="generatePrompt()">プロンプトを生成する →</button>
+    </form>
+  </div>
+
+  <!-- ===== 画面3：プロンプト出力 ===== -->
+  <div id="screen-prompt" class="screen">
+    <button class="back-link" onclick="showScreen('form')">← 入力に戻る</button>
+
+    <h2>生成されたプロンプト</h2>
+
+    <div class="usage-hint">
+      <strong>使い方</strong>
+      <ol>
+        <li>下の「コピー」ボタンを押す</li>
+        <li>Claude・ChatGPT等に貼り付けて送信する</li>
+        <li>返ってきたフィードバックをもとに次回の練習方針を決める</li>
+      </ol>
+    </div>
+
+    <div class="prompt-area" id="prompt-output"></div>
+    <button class="btn btn-copy" id="copy-btn" onclick="copyPrompt()">コピー</button>
+    <button class="btn btn-reset" onclick="showScreen('select')">別の練習を記録する</button>
+  </div>
+
+</div>
+
+<script>
+// ===== 練習データ =====
+const PRACTICES = {
+  E: {
+    name: "E. 深層感情掘り",
+    level: "初級発展",
+    purpose: "表面感情の下にある一次感情（primary emotion）を識別する",
+    format: "Trio（話し手・聞き手・観察者）",
+    duration: "10分（練習7分＋フィードバック3分）",
+    evidence: [
+      'Greenberg (2002) "Emotion-Focused Therapy"：二次感情（怒り・苛立ち）の下には一次感情（恐れ・悲しみ・恥）がある。一次感情へのアクセスが共感の深さを決定する。',
+      "Greenberg & Watson (2006)：一次感情への応答が治療関係・会話継続に有意な効果を示した。"
+    ],
+    steps: [
+      "話し手が2分の実体験を話す",
+      "聞き手が表面感情を1つ特定し、紙に1語（感情名のみ）メモする（話し手には言わない）",
+      "「表面感情の下に何がありそうか」を考え、深層感情を推定する",
+      "表面感情と深層感情の両方を話し手に開示する（例：「怒りに見えるけど、その下には不安があるかも」）",
+      "話し手がどちらが近かったか・両方あったかを評価する",
+      "観察者が「表面感情と深層感情が構造的に区別されていたか」を短くフィードバックする"
+    ],
+    criteria: [
+      { id: "reach",       label: "深層感情への到達度（話し手の評価）" },
+      { id: "distinction", label: "表面/深層の区別が応答に反映されているか（観察者の評価）" }
+    ],
+    note: "深層感情を「断定」しないこと。「〜があるかも」「〜に見えた」という仮説的表現で提示する。"
+  },
+
+  I: {
+    name: "I. 自己開示ブロック",
+    level: "初級メタ",
+    purpose: "聞き手が自分の体験・意見を持ち込む衝動を認識し、抑制する",
+    format: "Pair ＋ 事後メモ",
+    duration: "7分（練習5分＋メモ2分）",
+    evidence: [
+      'Rogers (1961) "On Becoming a Person"：会話の焦点を話し手に置き続けることが共感の基本条件。',
+      "Hayes et al. (2012) ACT（Acceptance and Commitment Therapy）：衝動の「気づき」と「距離取り」（defusion）が行動の選択の幅を広げる。"
+    ],
+    steps: [
+      "通常のリフレクション練習（D）を行う",
+      "ルール：「自分の体験・感想・意見を一切言わない」",
+      "セッション後、聞き手が以下をメモする：「自分のことを話したくなった瞬間はどこか」「何を言いたかったか」",
+      "Pairで共有する（任意）"
+    ],
+    criteria: [
+      { id: "no_disclose", label: "自己開示しなかったか（話し手観察）" },
+      { id: "verbalized",  label: "衝動のあった場面を言語化できたか（聞き手メモ）" }
+    ],
+    note: "「自分の体験を話したくなる衝動」と、L練習の「解決したくなる衝動」は別物。このIは自己参照（"私も同じ経験が…"型）の制御が目的。"
+  },
+
+  L: {
+    name: "L. 助言衝動の自覚",
+    level: "初級メタ",
+    purpose: "「解決したい」衝動をリアルタイムで認識する力を育てる（メタ認知トレーニング）",
+    format: "Solo事後メモ（Pair練習のセット）",
+    duration: "練習後5分",
+    evidence: [
+      'Wells (2000) "Emotional Disorders and the Metacognitive Model"：自分の思考プロセスを観察・監視する metacognitive awareness の訓練が思考の制御能力を高める。',
+      "Hayes et al. (2012) ACT：衝動の「気づき」と「距離取り」（defusion）が行動の選択の幅を広げる。",
+      "Flavell (1979)：自己の認知プロセスを監視する能力は訓練可能。"
+    ],
+    steps: [
+      "任意の練習（D・J等）の直後に記録を始める",
+      "「解決策・助言を言いたくなった場面はどこか」を具体的に記録する",
+      "「その時どんな言葉が浮かんだか」を記録する",
+      "記録をPairで共有する（任意）"
+    ],
+    criteria: [
+      { id: "scene", label: "衝動が起きた場面を言語化できたか" }
+    ],
+    note: "まずは衝動の認識を安定させることが目標。「なぜ言いたかったか」の動機分析は次のステップ。"
+  }
+};
+
+// ===== 状態 =====
+let currentPractice = null;
+
+// ===== 画面切り替え =====
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ===== セレクター画面の描画 =====
+function renderSelector() {
+  const container = document.getElementById('practice-cards');
+  container.innerHTML = '';
+  for (const [id, p] of Object.entries(PRACTICES)) {
+    const card = document.createElement('div');
+    card.className = 'practice-card';
+    card.innerHTML = `
+      <div class="card-title">${p.name} <span class="badge">${p.level}</span></div>
+      <div class="card-meta">${p.format} ／ ${p.duration}</div>
+      <div class="card-purpose">${p.purpose}</div>
+    `;
+    card.addEventListener('click', () => selectPractice(id));
+    container.appendChild(card);
+  }
+}
+
+// ===== 練習選択 =====
+function selectPractice(id) {
+  currentPractice = id;
+  renderGuide(id);
+  renderCriteria(id);
+  document.getElementById('free-text').value = '';
+  showScreen('form');
+}
+
+// ===== ガイド表示 =====
+function renderGuide(id) {
+  const p = PRACTICES[id];
+  const stepsHtml = p.steps.map(s => `<li>${s}</li>`).join('');
+  const evidenceHtml = p.evidence.map(e => `<li>${e}</li>`).join('');
+
+  document.getElementById('practice-guide').innerHTML = `
+    <h2>${p.name}</h2>
+    <div class="highlight"><strong>目的：</strong>${p.purpose}</div>
+
+    <h3>手順</h3>
+    <ol class="step-list">${stepsHtml}</ol>
+
+    <h3>理論的根拠</h3>
+    <ul style="padding-left:18px; font-size:12px; color:#555; margin-bottom:8px;">${evidenceHtml}</ul>
+
+    <div class="note">⚠ ${p.note}</div>
+  `;
+}
+
+// ===== 評価フォーム描画 =====
+const RATINGS = [
+  { value: '◎ できた',        cls: 'r-excellent', short: '◎' },
+  { value: '○ おおむねできた', cls: 'r-good',      short: '○' },
+  { value: '△ 惜しかった',    cls: 'r-close',     short: '△' },
+  { value: '✕ できなかった',   cls: 'r-miss',      short: '✕' }
+];
+
+function renderCriteria(id) {
+  const p = PRACTICES[id];
+  const list = document.getElementById('criteria-list');
+  list.innerHTML = '';
+
+  p.criteria.forEach((c, i) => {
+    const radiosHtml = RATINGS.map(r => `
+      <label>
+        <input type="radio" name="rating_${i}" value="${r.value}">
+        <span><span class="rating-circle ${r.cls}">${r.short}</span> ${r.value.replace(/^[◎○△✕] /, '')}</span>
+      </label>
+    `).join('');
+
+    const item = document.createElement('li');
+    item.className = 'criteria-item';
+    item.innerHTML = `
+      <div class="criteria-label">${i + 1}. ${c.label}</div>
+      <div class="rating-group">${radiosHtml}</div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+// ===== プロンプト生成 =====
+function generatePrompt() {
+  const p = PRACTICES[currentPractice];
+  const freeText = document.getElementById('free-text').value.trim() || '（なし）';
+
+  // 評価軸の選択値を収集
+  const criteriaLines = p.criteria.map((c, i) => {
+    const selected = document.querySelector(`input[name="rating_${i}"]:checked`);
+    const val = selected ? selected.value : '（未選択）';
+    return `[チェック] ${c.label}：${val}`;
+  }).join('\n');
+
+  const evidenceLines = p.evidence.map(e => `- ${e}`).join('\n');
+  const criteriaDescs = p.criteria.map(c => `- ${c.label}`).join('\n');
+
+  const prompt = `## 練習情報
+練習名: ${p.name}
+形式: ${p.format}
+目的: ${p.purpose}
+
+## 理論的根拠（参照情報）
+${evidenceLines}
+
+## 評価基準
+${criteriaDescs}
+
+## 今回の練習記録
+${criteriaLines}
+[自由記述] ${freeText}
+
+## 依頼
+上記をアクティブリスニング（EFT・ACT・動機づけ面接等の観点）で評価し、次回の具体的な改善点を教えてください。`;
+
+  document.getElementById('prompt-output').textContent = prompt;
+
+  const copyBtn = document.getElementById('copy-btn');
+  copyBtn.textContent = 'コピー';
+  copyBtn.classList.remove('copied');
+
+  showScreen('prompt');
+}
+
+// ===== コピー =====
+function copyPrompt() {
+  const text = document.getElementById('prompt-output').textContent;
+  const btn = document.getElementById('copy-btn');
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'コピーしました ✓';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'コピー';
+        btn.classList.remove('copied');
+      }, 2500);
+    }).catch(() => fallbackCopy(text, btn));
+  } else {
+    fallbackCopy(text, btn);
+  }
+}
+
+function fallbackCopy(text, btn) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    document.execCommand('copy');
+    btn.textContent = 'コピーしました ✓';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'コピー';
+      btn.classList.remove('copied');
+    }, 2500);
+  } catch (e) {
+    btn.textContent = '手動でコピーしてください';
+  }
+  document.body.removeChild(ta);
+}
+
+// ===== 初期化 =====
+renderSelector();
+</script>
+</body>
+</html>
