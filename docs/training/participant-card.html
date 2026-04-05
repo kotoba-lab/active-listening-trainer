@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>アクティブリスニング練習カード</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Hiragino Sans", "Meiryo", sans-serif;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #1a1a1a;
+      background: #f5f5f5;
+    }
+
+    /* A4 1枚に2カード並べる（印刷時） */
+    .sheet {
+      max-width: 780px;
+      margin: 32px auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding: 16px;
+    }
+
+    .card {
+      background: #fff;
+      border: 2px solid #2a6496;
+      border-radius: 6px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    /* カードヘッダー */
+    .card-header {
+      background: #2a6496;
+      color: #fff;
+      border-radius: 3px;
+      padding: 8px 12px;
+      margin: -20px -20px 16px;
+      border-radius: 4px 4px 0 0;
+    }
+    .card-header h1 {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .card-header .role {
+      font-size: 10px;
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+
+    h2 {
+      font-size: 11px;
+      font-weight: 700;
+      color: #2a6496;
+      border-bottom: 1px solid #2a6496;
+      padding-bottom: 3px;
+      margin: 14px 0 7px;
+    }
+
+    ul { padding-left: 16px; }
+    li { margin-bottom: 3px; font-size: 11px; }
+
+    /* 禁止 */
+    .prohibited {
+      background: #fdf3f3;
+      border: 1px solid #e74c3c;
+      border-radius: 3px;
+      padding: 7px 10px;
+      margin: 8px 0;
+    }
+    .prohibited .label {
+      font-weight: 700;
+      color: #c0392b;
+      font-size: 10px;
+      margin-bottom: 3px;
+    }
+    .prohibited p {
+      font-size: 11px;
+      color: #c0392b;
+      font-weight: 700;
+    }
+
+    /* フロー */
+    .flow-steps {
+      list-style: none;
+      padding: 0;
+      margin: 8px 0;
+    }
+    .flow-steps li {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 4px 0;
+      border-bottom: 1px dashed #eee;
+      font-size: 11px;
+    }
+    .flow-steps li:last-child { border-bottom: none; }
+    .step-num {
+      background: #2a6496;
+      color: #fff;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* フィードバック欄 */
+    .feedback-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      margin-top: 8px;
+    }
+    .feedback-table th {
+      background: #2a6496;
+      color: #fff;
+      padding: 4px 6px;
+      text-align: left;
+      font-size: 10px;
+    }
+    .feedback-table td {
+      padding: 4px 6px;
+      border-bottom: 1px solid #eee;
+      vertical-align: top;
+    }
+    .feedback-table tr:last-child td { border-bottom: none; }
+    .feedback-table .cat {
+      font-weight: 700;
+      color: #2a6496;
+      white-space: nowrap;
+    }
+
+    /* 評価欄（書き込み用） */
+    .eval-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 5px 0;
+      font-size: 11px;
+    }
+    .eval-label { min-width: 100px; }
+    .write-box {
+      border-bottom: 1px solid #999;
+      flex: 1;
+      height: 16px;
+    }
+
+    /* まとめ */
+    .summary {
+      background: #2a6496;
+      color: #fff;
+      text-align: center;
+      padding: 8px;
+      border-radius: 3px;
+      margin-top: 14px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    /* 印刷設定 */
+    @media print {
+      body { background: #fff; }
+      .sheet {
+        margin: 0;
+        padding: 10mm;
+        max-width: 100%;
+        gap: 10mm;
+      }
+      .card { box-shadow: none; }
+      @page { size: A4; margin: 0; }
+    }
+
+    /* スマホ */
+    @media (max-width: 600px) {
+      .sheet { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="sheet">
+
+  <!-- カード1：聞き手 + 観察者 -->
+  <div class="card">
+    <div class="card-header">
+      <h1>アクティブリスニング練習カード</h1>
+      <div class="role">聞き手 ／ 観察者</div>
+    </div>
+
+    <h2>聞き手のやること</h2>
+    <ul>
+      <li>最後まで遮らずに聞く</li>
+      <li>感情のピークを <strong>1つ</strong> 決める</li>
+      <li>感情＋強度を推定する</li>
+      <li>1文でリフレクションを返す</li>
+    </ul>
+
+    <div class="prohibited">
+      <div class="label">このワークでの禁止</div>
+      <p>質問　／　助言　／　問題解決</p>
+    </div>
+
+    <h2>ワークの流れ</h2>
+    <ul class="flow-steps">
+      <li><span class="step-num">1</span>話す（2〜3分）</li>
+      <li><span class="step-num">2</span>リフレクション（1回）</li>
+      <li><span class="step-num">3</span>フィードバック（1分）</li>
+      <li><span class="step-num">4</span>役割交代</li>
+    </ul>
+    <p style="font-size:10px; color:#666; margin-top:6px;">1セット5分 × 3回＝15分</p>
+
+    <h2>観察者のチェックリスト</h2>
+    <table class="feedback-table">
+      <tr><th class="cat">項目</th><th>記録</th></tr>
+      <tr>
+        <td class="cat">①構造</td>
+        <td>ルール遵守：OK ／ NG</td>
+      </tr>
+      <tr>
+        <td class="cat">②精度</td>
+        <td>
+          ピーク：前半 ／ 中盤 ／ 後半<br>
+          感情：＿＿＿寄りに見えた<br>
+          強度：弱 ／ 中 ／ 強
+        </td>
+      </tr>
+      <tr>
+        <td class="cat">③影響</td>
+        <td>
+          広がった ／ 変化なし ／ 止まった<br>
+          気になった点：＿＿＿＿＿
+        </td>
+      </tr>
+    </table>
+
+    <div class="summary">
+      「感情を1つ捉えて、1文で返し、反応で修正する」
+    </div>
+  </div>
+
+  <!-- カード2：話し手 + 振り返り -->
+  <div class="card">
+    <div class="card-header">
+      <h1>アクティブリスニング練習カード</h1>
+      <div class="role">話し手</div>
+    </div>
+
+    <h2>話し手のやること</h2>
+    <ul>
+      <li>2〜3分の実体験を話す</li>
+      <li>リフレクションを受け取る</li>
+      <li>以下の軸でフィードバックする</li>
+    </ul>
+
+    <h2>フィードバック（話し手から）</h2>
+    <div class="eval-row">
+      <span class="eval-label">わかってもらえた感</span>
+      <span>（ 0 ・ 1 ・ 2 ・ 3 ・ 4 ・ 5 ・ 6 ・ 7 ・ 8 ・ 9 ・ 10 ）</span>
+    </div>
+    <div class="eval-row">
+      <span class="eval-label">話したくなったか</span>
+      <span>　Yes　／　No</span>
+    </div>
+    <div class="eval-row" style="align-items:flex-start; margin-top:8px;">
+      <span class="eval-label">ズレた場合の修正</span>
+      <div class="write-box" style="height:36px; border:1px solid #ccc; border-radius:2px; flex:1;"></div>
+    </div>
+
+    <h2>精度を上げるポイント</h2>
+    <ul>
+      <li><strong>ピーク1つ縛り</strong>：曖昧な共感を防ぐ</li>
+      <li><strong>ズレ歓迎</strong>：修正こそ学習の本体</li>
+      <li><strong>深層感情</strong>：怒り → 不安・傷つき</li>
+      <li><strong>自然な言語</strong><br>
+        <span style="color:#c0392b;">NG：</span>「あなたは〜と感じているのですね」<br>
+        <span style="color:#27ae60;">OK：</span>「それ、しんどかったんだね」
+      </li>
+    </ul>
+
+    <h2>よくある失敗</h2>
+    <ul>
+      <li>共感テンプレ化</li>
+      <li>問題解決に飛ぶ</li>
+      <li>感情を広く取りすぎる</li>
+    </ul>
+
+    <div class="summary">
+      「感情を1つ捉えて、1文で返し、反応で修正する」
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

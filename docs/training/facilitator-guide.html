@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>アクティブリスニング練習 ファシリテーターガイド</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Hiragino Sans", "Meiryo", sans-serif;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #1a1a1a;
+      background: #f5f5f5;
+    }
+
+    .page {
+      max-width: 780px;
+      margin: 32px auto;
+      background: #fff;
+      padding: 48px 56px;
+      border-radius: 4px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+
+    /* ヘッダー */
+    .doc-header {
+      border-bottom: 3px solid #2a6496;
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+    .doc-header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #2a6496;
+      letter-spacing: 0.05em;
+    }
+    .doc-header .subtitle {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    /* セクション */
+    h2 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      background: #2a6496;
+      padding: 6px 12px;
+      margin: 28px 0 12px;
+      border-radius: 2px;
+    }
+    h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #2a6496;
+      border-left: 3px solid #2a6496;
+      padding-left: 8px;
+      margin: 16px 0 8px;
+    }
+
+    p { margin-bottom: 8px; }
+    ul, ol { padding-left: 20px; margin-bottom: 8px; }
+    li { margin-bottom: 4px; }
+
+    /* ポイントボックス */
+    .highlight {
+      background: #eaf2fb;
+      border-left: 4px solid #2a6496;
+      padding: 10px 14px;
+      margin: 12px 0;
+      border-radius: 0 2px 2px 0;
+    }
+    .highlight strong { color: #2a6496; }
+
+    /* 禁止ボックス */
+    .prohibited {
+      background: #fdf3f3;
+      border-left: 4px solid #c0392b;
+      padding: 10px 14px;
+      margin: 12px 0;
+      border-radius: 0 2px 2px 0;
+    }
+    .prohibited .label {
+      font-weight: 700;
+      color: #c0392b;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    /* 注釈ボックス */
+    .note {
+      background: #fffbe6;
+      border: 1px solid #f0c040;
+      padding: 8px 12px;
+      margin: 8px 0;
+      border-radius: 2px;
+      font-size: 12px;
+      color: #7a6000;
+    }
+
+    /* フロー */
+    .flow {
+      display: flex;
+      gap: 8px;
+      margin: 12px 0;
+      flex-wrap: wrap;
+    }
+    .flow-step {
+      background: #2a6496;
+      color: #fff;
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .flow-arrow {
+      color: #999;
+      align-self: center;
+      font-size: 16px;
+    }
+
+    /* 2カラム */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 12px 0;
+    }
+    .col-box {
+      background: #f8f8f8;
+      border: 1px solid #ddd;
+      padding: 12px;
+      border-radius: 2px;
+    }
+    .col-box h4 {
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #333;
+    }
+
+    /* フィードバック表 */
+    .feedback-grid {
+      border: 1px solid #ddd;
+      border-radius: 2px;
+      overflow: hidden;
+      margin: 12px 0;
+    }
+    .feedback-row {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      border-bottom: 1px solid #eee;
+    }
+    .feedback-row:last-child { border-bottom: none; }
+    .feedback-category {
+      background: #f0f4f8;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 10px;
+      display: flex;
+      align-items: flex-start;
+      color: #2a6496;
+    }
+    .feedback-items {
+      padding: 10px 12px;
+    }
+    .feedback-items li { font-size: 12px; margin-bottom: 4px; }
+
+    /* ステップ */
+    .step-list { counter-reset: step; padding-left: 0; list-style: none; }
+    .step-list li {
+      counter-increment: step;
+      padding: 8px 12px 8px 44px;
+      position: relative;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .step-list li::before {
+      content: counter(step);
+      position: absolute;
+      left: 12px;
+      top: 8px;
+      width: 22px;
+      height: 22px;
+      background: #2a6496;
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    /* レベル表 */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 12px;
+    }
+    th {
+      background: #2a6496;
+      color: #fff;
+      padding: 6px 10px;
+      text-align: left;
+      font-weight: 700;
+    }
+    td {
+      padding: 6px 10px;
+      border-bottom: 1px solid #eee;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: #f8f8f8; }
+
+    /* まとめ */
+    .summary-box {
+      background: #2a6496;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+      border-radius: 4px;
+      margin-top: 28px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    /* 印刷設定 */
+    @media print {
+      body { background: #fff; }
+      .page {
+        margin: 0;
+        padding: 20mm 20mm;
+        box-shadow: none;
+        border-radius: 0;
+        max-width: 100%;
+      }
+      h2 { break-after: avoid; }
+      h3 { break-after: avoid; }
+      .flow { break-inside: avoid; }
+      .feedback-grid { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="doc-header">
+    <h1>アクティブリスニング練習　ファシリテーターガイド</h1>
+    <div class="subtitle">全体設計・進行手順・教育的背景　/ 進行者用</div>
+  </div>
+
+  <!-- 1. 基本方針 -->
+  <h2>1. 基本方針（エビデンスベース）</h2>
+  <div class="highlight">
+    <strong>単なる座学ではなく、短時間・反復・フィードバック付き（deliberate practice）が有効</strong>
+  </div>
+  <p>技能は分解して練習する：</p>
+  <ul>
+    <li>感情検出</li>
+    <li>リフレクション</li>
+    <li>要約</li>
+  </ul>
+
+  <!-- 2. 二層構造 -->
+  <h2>2. 二層構造モデル</h2>
+  <div class="two-col">
+    <div class="col-box">
+      <h4>Layer 1：アプリ</h4>
+      <ul>
+        <li>型の習得</li>
+        <li>パターン認識</li>
+        <li>NG理解</li>
+      </ul>
+    </div>
+    <div class="col-box">
+      <h4>Layer 2：生練習</h4>
+      <ul>
+        <li>実際の対人反応</li>
+        <li>感情負荷の中で実行</li>
+        <li>フィードバックと修正</li>
+      </ul>
+    </div>
+  </div>
+  <p>最適なループ（詳細はSection 7参照）：</p>
+  <div class="flow">
+    <span class="flow-step">アプリ</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">生練習</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">現場実践</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">振り返り</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">アプリ</span>
+  </div>
+
+  <!-- 3. コア練習 -->
+  <h2>3. コア練習：感情ピーク＋リフレクション</h2>
+
+  <h3>ワーク目的</h3>
+  <ul>
+    <li>感情検出精度の向上</li>
+    <li>非助言的関わりの習得</li>
+  </ul>
+
+  <h3>受け手（聞き手）</h3>
+  <ul>
+    <li>最後まで遮らずに聞く</li>
+    <li>感情のピークを1つ決める</li>
+    <li>感情＋強度を推定する</li>
+    <li>1文でリフレクションを返す</li>
+  </ul>
+  <div class="prohibited">
+    <div class="label">このワークでの禁止事項</div>
+    質問・助言・問題解決
+    <div class="note" style="margin-top:8px;">
+      ※「すぐに何かしたい」という欲求を意図的に抑制することが目的。聞くだけで関わる体験を作るために設定している。
+    </div>
+  </div>
+
+  <h3>語り手（話し手）</h3>
+  <ul>
+    <li>2〜3分の実体験を話す</li>
+    <li>リフレクションを以下の軸で評価する：
+      <ul>
+        <li>わかってもらえた感（0〜10）</li>
+        <li>話したくなったか（Yes / No）</li>
+        <li>ズレた場合は修正を提示する</li>
+      </ul>
+    </li>
+  </ul>
+
+  <h3>観察者（任意）</h3>
+  <div class="feedback-grid">
+    <div class="feedback-row">
+      <div class="feedback-category">① 構造</div>
+      <div class="feedback-items">
+        <ul>
+          <li>ルール遵守：OK / NG</li>
+        </ul>
+      </div>
+    </div>
+    <div class="feedback-row">
+      <div class="feedback-category">② 精度</div>
+      <div class="feedback-items">
+        <ul>
+          <li>ピーク：前半 / 中盤 / 後半</li>
+          <li>感情：〇〇寄りに見えた</li>
+          <li>強度：弱 / 中 / 強</li>
+        </ul>
+      </div>
+    </div>
+    <div class="feedback-row">
+      <div class="feedback-category">③ 影響</div>
+      <div class="feedback-items">
+        <ul>
+          <li>反応：話が広がった / 変化なし / 止まった</li>
+          <li>気になった点：〇〇</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3>ワークの流れ</h3>
+  <ol class="step-list">
+    <li>話す（2〜3分）</li>
+    <li>リフレクション（1回）</li>
+    <li>フィードバック（1分）</li>
+    <li>役割交代</li>
+  </ol>
+  <div class="highlight" style="margin-top:12px;">
+    <strong>1セット5分 × 3回＝15分研修</strong>
+  </div>
+
+  <!-- 4. deliberate practice -->
+  <h2>4. Deliberate Practice 設計</h2>
+  <div class="two-col">
+    <div class="col-box">
+      <h4>基本原則</h4>
+      <ul>
+        <li>1技能に絞る</li>
+        <li>短時間で回す</li>
+        <li>即フィードバック</li>
+        <li>反復する</li>
+      </ul>
+    </div>
+    <div class="col-box">
+      <h4>推奨分解</h4>
+      <table style="margin:0;">
+        <tr><th>レベル</th><th>練習内容</th></tr>
+        <tr><td>初級</td><td>感情ピーク検出のみ</td></tr>
+        <tr><td>中級</td><td>感情＋リフレクション</td></tr>
+        <tr><td>上級</td><td>深層感情＋修正反射</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- 5. 精度を上げる工夫 -->
+  <h2>5. 精度を上げる工夫</h2>
+  <ul>
+    <li><strong>ピーク1つ縛り</strong>：曖昧な共感を防ぐ</li>
+    <li><strong>ズレ歓迎</strong>：修正こそ学習の本体</li>
+    <li><strong>深層感情を見る</strong>：怒り → 不安・傷つき</li>
+    <li><strong>自然な言語</strong>：教科書表現禁止
+      <ul>
+        <li>NG：「あなたは〜と感じているのですね」</li>
+        <li>OK：「それ、しんどかったんだね」</li>
+      </ul>
+    </li>
+  </ul>
+
+  <!-- 6. よくある失敗 -->
+  <h2>6. よくある失敗</h2>
+  <ul>
+    <li>共感テンプレ化</li>
+    <li>問題解決に飛ぶ</li>
+    <li>感情を広く取りすぎる</li>
+  </ul>
+
+  <!-- 7. 実務への転移 -->
+  <h2>7. 実務への転移ステップ</h2>
+  <p>Section 2のループの詳細版：</p>
+  <ol class="step-list">
+    <li>アプリで練習（型の習得）</li>
+    <li>生練習で実行（感情負荷あり）</li>
+    <li>現場で1回使う（実戦）</li>
+    <li>振り返り（何がズレたか）</li>
+    <li>アプリで再練習（修正点を集中練習）</li>
+  </ol>
+
+  <!-- 8. 訓練の本質 -->
+  <h2>8. この訓練の本質</h2>
+  <ul>
+    <li>正解を当てるゲームではない</li>
+    <li>相手の反応で調整する技術</li>
+    <li>「伝わったか」が唯一の評価軸</li>
+  </ul>
+
+  <div class="summary-box">
+    「感情を1つ捉えて、1文で返し、反応で修正する」
+  </div>
+
+</div>
+</body>
+</html>
