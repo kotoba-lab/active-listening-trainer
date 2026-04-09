@@ -327,6 +327,34 @@
       vertical-align: middle;
     }
 
+    /* アコーディオン（手順） */
+    .accordion-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: none;
+      border: none;
+      border-bottom: 1px solid #ddd;
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      color: #2a6496;
+      cursor: pointer;
+      padding: 10px 2px;
+      margin: 12px 0 0;
+    }
+    .accordion-toggle:hover { text-decoration: underline; }
+    .accordion-toggle .chevron {
+      font-size: 11px;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    .accordion-toggle.open .chevron { transform: rotate(180deg); }
+    .accordion-body { display: none; padding-top: 4px; }
+    .accordion-body.open { display: block; }
+
     @media (max-width: 480px) {
       .page { margin: 16px auto; }
       .rating-group { gap: 6px; }
@@ -345,8 +373,8 @@
   <!-- ===== 画面1：練習セレクター ===== -->
   <div id="screen-select" class="screen active">
     <div class="highlight">
-      対面練習（Pair / Trio / Solo）が終わったら、練習を選んで記録を入力してください。<br>
-      入力内容をもとにLLMへのフィードバック依頼文を生成します。
+      対面練習（ペア・3人グループ・ひとり）が終わったら、練習を選んで記録を入力してください。<br>
+      入力内容をもとに、AI（Claude・ChatGPT等）へのフィードバック依頼文を生成します。
     </div>
 
     <h2>練習を選ぶ</h2>
@@ -404,7 +432,7 @@ const PRACTICES = {
     name: "E. 深層感情掘り",
     level: "初級発展",
     purpose: "表面感情の下にある一次感情（primary emotion）を識別する",
-    format: "Trio（話し手・聞き手・観察者）",
+    format: "3人グループ（話し手・聞き手・観察者）",
     duration: "10分（練習7分＋フィードバック3分）",
     evidence: [
       'Greenberg (2002) "Emotion-Focused Therapy"：二次感情（怒り・苛立ち）の下には一次感情（恐れ・悲しみ・恥）がある。一次感情へのアクセスが共感の深さを決定する。',
@@ -429,14 +457,14 @@ const PRACTICES = {
     name: "I. 自己開示ブロック",
     level: "初級メタ",
     purpose: "聞き手が自分の体験・意見を持ち込む衝動を認識し、抑制する",
-    format: "Pair ＋ 事後メモ",
+    format: "2人ペア ＋ 事後メモ",
     duration: "7分（練習5分＋メモ2分）",
     evidence: [
       'Rogers (1961) "On Becoming a Person"：会話の焦点を話し手に置き続けることが共感の基本条件。',
       "Hayes et al. (2012) ACT（Acceptance and Commitment Therapy）：衝動の「気づき」と「距離取り」（defusion）が行動の選択の幅を広げる。"
     ],
     steps: [
-      "通常のリフレクション練習（D）を行う",
+      "通常のリフレクション練習（練習Dと同じ形式）を行う",
       "ルール：「自分の体験・感想・意見を一切言わない」",
       "セッション後、聞き手が以下をメモする：「自分のことを話したくなった瞬間はどこか」「何を言いたかったか」",
       "Pairで共有する（任意）"
@@ -445,17 +473,17 @@ const PRACTICES = {
       { id: "no_disclose", label: "自己開示しなかったか（話し手観察）" },
       { id: "verbalized",  label: "衝動のあった場面を言語化できたか（聞き手メモ）" }
     ],
-    note: "「自分の体験を話したくなる衝動」と、L練習の「解決したくなる衝動」は別物。このIは自己参照（"私も同じ経験が…"型）の制御が目的。"
+    note: "「自分の体験を話したくなる衝動」と、L練習の「解決したくなる衝動」は別物。この練習は「私も同じ経験が…」型の発言を控えることが目的。"
   },
 
   L: {
     name: "L. 助言衝動の自覚",
     level: "初級メタ",
-    purpose: "「解決したい」衝動をリアルタイムで認識する力を育てる（メタ認知トレーニング）",
-    format: "Solo事後メモ（Pair練習のセット）",
+    purpose: "「解決したい」衝動をリアルタイムで認識する力を育てる（自分の思考プロセスを観察するトレーニング）",
+    format: "ひとりで記録（ペア練習のあと）",
     duration: "練習後5分",
     evidence: [
-      'Wells (2000) "Emotional Disorders and the Metacognitive Model"：自分の思考プロセスを観察・監視する metacognitive awareness の訓練が思考の制御能力を高める。',
+      'Wells (2000) "Emotional Disorders and the Metacognitive Model"：自分の思考プロセスを観察・監視する力（メタ認知的気づき）の訓練が思考の制御能力を高める。',
       "Hayes et al. (2012) ACT：衝動の「気づき」と「距離取り」（defusion）が行動の選択の幅を広げる。",
       "Flavell (1979)：自己の認知プロセスを監視する能力は訓練可能。"
     ],
@@ -475,7 +503,7 @@ const PRACTICES = {
     name: "G. 修正応答",
     level: "初級発展",
     purpose: "「一発正解」ではなく「修正力」を鍛える。実際の対話に近い構造。",
-    format: "Pair",
+    format: "2人ペア",
     duration: "5分",
     evidence: [
       'Safran & Muran (2000) "Negotiating the Therapeutic Alliance"：rupture-repair（亀裂と修復）のプロセスは関係深化に寄与する。一度外すことは問題ではなく、修正の質が重要。',
@@ -499,10 +527,10 @@ const PRACTICES = {
     name: "J. フォローアップループ→要約",
     level: "中級",
     purpose: "明確化のための問いかけを重ね、最後に状況と感情を1文で要約する",
-    format: "Trio（話し手・聞き手・観察者）",
+    format: "3人グループ（話し手・聞き手・観察者）",
     duration: "10分",
     evidence: [
-      'Miller & Rollnick (2013) "Motivational Interviewing, 3rd ed."：OARS（Open questions, Affirmations, Reflections, Summaries）はMIの中核構造。フォローアップ→要約のループが話し手の自己理解を促進する。',
+      'Miller & Rollnick (2013) "Motivational Interviewing, 3rd ed."：OARS（開かれた質問・肯定・リフレクション・要約）は動機づけ面接の中核構造。フォローアップ→要約のループが話し手の自己理解を促進する。',
       "Clarification sequence（明確化連鎖）：オープン質問による段階的明確化が話し手の自己理解を促進する。"
     ],
     steps: [
@@ -561,20 +589,25 @@ function selectPractice(id) {
 function renderGuide(id) {
   const p = PRACTICES[id];
   const stepsHtml = p.steps.map(s => `<li>${s}</li>`).join('');
-  const evidenceHtml = p.evidence.map(e => `<li>${e}</li>`).join('');
 
   document.getElementById('practice-guide').innerHTML = `
     <h2>${p.name}</h2>
     <div class="highlight"><strong>目的：</strong>${p.purpose}</div>
-
-    <h3>手順</h3>
-    <ol class="step-list">${stepsHtml}</ol>
-
-    <h3>理論的根拠</h3>
-    <ul style="padding-left:18px; font-size:12px; color:#555; margin-bottom:8px;">${evidenceHtml}</ul>
-
     <div class="note">⚠ ${p.note}</div>
+
+    <button class="accordion-toggle" onclick="toggleAccordion(this)" type="button">
+      手順を確認する <span class="chevron">▼</span>
+    </button>
+    <div class="accordion-body">
+      <ol class="step-list" style="margin-top:8px;">${stepsHtml}</ol>
+    </div>
   `;
+}
+
+// ===== アコーディオン =====
+function toggleAccordion(btn) {
+  btn.classList.toggle('open');
+  btn.nextElementSibling.classList.toggle('open');
 }
 
 // ===== 評価フォーム描画 =====
